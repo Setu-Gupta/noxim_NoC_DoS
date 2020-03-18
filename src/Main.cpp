@@ -101,8 +101,9 @@ int sc_main(int arg_num, char *arg_vet[])
 
     reset.write(0);
     cout << " done! " << endl;
-    cout << " Now running for " << GlobalParams:: simulation_time << " cycles..." << endl;
-    sc_start(GlobalParams::simulation_time, SC_NS);
+    cout << "reached at running point. Value of simulation_time is" << GlobalParams:: simulation_time - GlobalParams::reset_time << endl;
+    cout << " Now running for " << GlobalParams:: simulation_time - GlobalParams::reset_time << " cycles..." << endl;
+    sc_start(GlobalParams::simulation_time - GlobalParams:: reset_time, SC_NS);
 
 
     // Close the simulation
