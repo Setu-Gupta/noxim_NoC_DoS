@@ -27,6 +27,7 @@ struct Communication {
   int t_on;			// Time (in cycles) at which activity begins
   int t_off;			// Time (in cycles) at which activity ends
   int t_period;		        // Period after which activity starts again
+  Payload payload;		// Payload for all flits in packet 
 };
 
 class GlobalTrafficTable {
@@ -44,7 +45,7 @@ class GlobalTrafficTable {
     double getCumulativePirPor(const int src_id,
 			       const int ccycle,
 			       const bool pir_not_por,
-			       vector < pair < int, double > > &dst_prob);
+			       vector < tuple < int, double, Payload > > &dst_prob);
 
     // Returns the number of occurrences of soruce src_id in the traffic
     // table

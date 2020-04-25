@@ -45,7 +45,9 @@ SC_MODULE(ProcessingElement)
     bool current_level_tx;	// Current level for Alternating Bit Protocol (ABP)
     queue < Packet > packet_queue;	// Local queue of packets
     bool transmittedAtPreviousCycle;	// Used for distributions with memory
-
+    bool dataAvailable;		// If PE acts as a memory device, this specifies of data is available
+    int data;			//Stored data
+    
     // Functions
     void rxProcess();		// The receiving process
     void txProcess();		// The transmitting process
@@ -60,6 +62,11 @@ SC_MODULE(ProcessingElement)
     Packet trafficButterfly();	// Butterfly destination distribution
     Packet trafficLocal();	// Random with locality
     Packet trafficULocal();	// Random with locality
+    void receive(Flit flit);		// Recives flits and updates dataAvailable by return value
+    void handleWrite(Flit flit);
+    void handleReadReq(Flit flit);
+    void handleReadReply(Flit flit);
+    void handleDefault(Flit flit);
 
     GlobalTrafficTable *traffic_table;	// Reference to the Global traffic Table
     bool never_transmit;	// true if the PE does not transmit any packet 

@@ -34,10 +34,11 @@ bool GlobalTrafficTable::load(const char *fname)
 	int src, dst;	// Mandatory
 	double pir, por;
 	int t_on, t_off, t_period;
-
+	uint32_t payload_type;
+	int payload_data;
 	int params =
-	  sscanf(line, "%d %d %lf %lf %d %d %d", &src, &dst, &pir,
-		 &por, &t_on, &t_off, &t_period);
+	  sscanf(line, "%d %d %lf %lf %d %d %d %d %d", &src, &dst, &pir,
+		 &por, &t_on, &t_off, &t_period, &payload_type, &payload_data);
 	if (params >= 2) {
 	  // Create a communication from the parameters read on the line
 	  Communication communication;
@@ -82,7 +83,20 @@ bool GlobalTrafficTable::load(const char *fname)
 	    communication.t_period =
 	      GlobalParams::reset_time +
 	      GlobalParams::simulation_time;
-
+	
+	  // Custom Payload Type
+	  if (params >= 8) {
+	    communication.payload.type = payload_type;
+	  } else
+	    communication.payload.type = PAYLOAD_DEFAULT;
+	  
+	  // Custom Payload Data
+	  if (params >= 9) {
+	    assert(payload_type == PAYLOAD_WRITE_DATA);
+	    communication.payload.data = payload_data;
+	  } else
+	    communication.payload.data = -1;
+	  
 	  // Add this communication to the vector of communications
 	  traffic_table.push_back(communication);
 	}
@@ -96,7 +110,7 @@ bool GlobalTrafficTable::load(const char *fname)
 double GlobalTrafficTable::getCumulativePirPor(const int src_id,
 						    const int ccycle,
 						    const bool pir_not_por,
-						    vector < pair < int, double > > &dst_prob)
+						    vector < tuple < int, double, Payload > > &dst_prob)
 {
   double cpirnpor = 0.0;
 
@@ -106,15 +120,17 @@ double GlobalTrafficTable::getCumulativePirPor(const int src_id,
     Communication comm = traffic_table[i];
     if (comm.src == src_id) {
       int r_ccycle = ccycle % comm.t_period;
+      //cout << "Ccycle is:" << ccycle << " r_ccycle is:" << r_ccycle;
       if (r_ccycle > comm.t_on && r_ccycle < comm.t_off) {
+	//cout << " Entered!" << endl;
 	cpirnpor += pir_not_por ? comm.pir : comm.por;
-	pair < int, double >dp(comm.dst, cpirnpor);
+	tuple < int, double, Payload >dp(comm.dst, cpirnpor, comm.payload);
 	dst_prob.push_back(dp);
       }
     }
   }
 
-  return cpirnpor;
+return cpirnpor;
 }
 
 int GlobalTrafficTable::occurrencesAsSource(const int src_id)

@@ -21,9 +21,11 @@ void ProcessingElement::rxProcess()
     if (reset.read()) {
 	ack_rx.write(0);
 	current_level_rx = 0;
+	dataAvailable = false;
     } else {
 	if (req_rx.read() == 1 - current_level_rx) {
 	    Flit flit_tmp = flit_rx.read();
+	    receive(flit_tmp);
 	    current_level_rx = 1 - current_level_rx;	// Negate the old value for Alternating Bit Protocol (ABP)
 	}
 	ack_rx.write(current_level_rx);
@@ -36,6 +38,7 @@ void ProcessingElement::txProcess()
 	req_tx.write(0);
 	current_level_tx = 0;
 	transmittedAtPreviousCycle = false;
+	data = -1;
     } else {
 	Packet packet;
 
@@ -69,7 +72,7 @@ Flit ProcessingElement::nextFlit()
     flit.sequence_no = packet.size - packet.flit_left;
     flit.sequence_length = packet.size;
     flit.hop_no = 0;
-    //  flit.payload     = DEFAULT_PAYLOAD;
+    flit.payload = packet.payload;
 
     flit.hub_relay_node = NOT_VALID;
 
@@ -147,7 +150,7 @@ bool ProcessingElement::canShot(Packet & packet)
 	    return false;
 
 	bool use_pir = (transmittedAtPreviousCycle == false);
-	vector < pair < int, double > > dst_prob;
+	vector < tuple < int, double, Payload > > dst_prob;
 	double threshold =
 	    traffic_table->getCumulativePirPor(local_id, (int) now, use_pir, dst_prob);
 
@@ -155,13 +158,25 @@ bool ProcessingElement::canShot(Packet & packet)
 	shot = (prob < threshold);
 	if (shot) {
 	    for (unsigned int i = 0; i < dst_prob.size(); i++) {
-		if (prob < dst_prob[i].second) {
+		if (prob < get<1>(dst_prob[i])) {
                     int vc = randInt(0,GlobalParams::n_virtual_channels-1);
-		    packet.make(local_id, dst_prob[i].first, vc, now, getRandomSize());
+		    Payload pl = get<2>(dst_prob[i]);
+		    packet.make(local_id, get<0>(dst_prob[i]), vc, now, getRandomSize(), pl);
 		    break;
 		}
 	    }
 	}
+
+
+    	//cout << "Shot value at cycle:" << (int) now << " is:" << (int) shot;
+    	//if(shot)
+    	//{
+    	//        cout << "----------------------------------\n";
+    	//}
+    	//else
+    	//{
+    	//        cout << " threshold is:" << threshold << " prob is:" << prob << endl;
+    	//}
     }
 
     return shot;
@@ -492,3 +507,74 @@ unsigned int ProcessingElement::getQueueSize() const
     return packet_queue.size();
 }
 
+void ProcessingElement::receive(Flit flit)
+{
+	if(flit.flit_type == FLIT_TYPE_TAIL)
+	{
+		LOG << "Received at " << local_id << " " << flit << " dataAvailable = " << dataAvailable << endl;
+		switch(flit.payload.type)
+		{
+			case PAYLOAD_DEFAULT:
+				LOG << "type default\n";
+				handleDefault(flit);
+				break;
+			case PAYLOAD_WRITE_DATA:
+				LOG << "type write\n";
+				handleWrite(flit);
+				break;
+			case PAYLOAD_READ_REQ:
+				LOG << "type read_request\n";
+				handleReadReq(flit);
+				break;
+			case PAYLOAD_READ_ANS:
+				LOG << "type read_reply\n";
+				handleReadReply(flit);
+				break;
+			default:
+				LOG << "type Not reserved!\n";
+				handleDefault(flit);
+		}
+	}
+}
+
+void ProcessingElement::handleDefault(Flit flit)
+{
+	LOG << "Got default flit at " << local_id << ". Doing nothing. " << endl;
+}
+
+void ProcessingElement::handleWrite(Flit flit)
+{
+	dataAvailable = true;
+	LOG << "Got write request at " << local_id << " from " << flit.src_id << endl;
+	int old_data = data;
+	data = flit.payload.data;
+	LOG << "Updating data from " << old_data << " to " << data << endl;
+}
+
+void ProcessingElement::handleReadReq(Flit flit)
+{
+	LOG << "Got read request at " << local_id << " from " << flit.src_id << endl;
+	if(!dataAvailable)
+		LOG << "Data not available. Ignoring request!" << endl;
+	else
+	{
+		LOG << "Sending data " << data << endl;
+		
+		Packet packet;	// Packet with reply data
+    		double now = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;	// Get current time stamp
+        	int vc = randInt(0,GlobalParams::n_virtual_channels-1);
+		Payload pl;	// Make payload 
+		pl.data = data;
+		pl.type = PAYLOAD_READ_ANS;
+		packet.make(local_id, flit.src_id, vc, now, 2, pl);
+
+	    	packet_queue.push(packet);	//Push packet in queue
+	    	transmittedAtPreviousCycle = true;
+	}
+	
+}
+
+void ProcessingElement::handleReadReply(Flit flit)
+{
+	LOG << "Got read reply at " << local_id << " from " << flit.src_id << " with data as " << flit.payload.data << endl;
+}

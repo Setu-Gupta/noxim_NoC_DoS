@@ -31,10 +31,10 @@ enum FlitType {
 
 // Payload -- Payload definition
 struct Payload {
-    sc_uint<32> data;	// Bus for the data to be exchanged
-
+    sc_uint<32> type;	// Type of payload
+    sc_int<32> data;	// Bus for the data to be exchanged
     inline bool operator ==(const Payload & payload) const {
-	return (payload.data == data);
+	return (payload.data == data && payload.type == type);
 }};
 
 // Packet -- Packet definition
@@ -46,21 +46,22 @@ struct Packet {
     int size;
     int flit_left;		// Number of remaining flits inside the packet
     bool use_low_voltage_path;
-
+    Payload payload;		//Payload for all flits
     // Constructors
     Packet() { }
 
-    Packet(const int s, const int d, const int vc, const double ts, const int sz) {
-	make(s, d, vc, ts, sz);
+    Packet(const int s, const int d, const int vc, const double ts, const int sz, Payload pl) {
+	make(s, d, vc, ts, sz, pl);
     }
 
-    void make(const int s, const int d, const int vc, const double ts, const int sz) {
+    void make(const int s, const int d, const int vc, const double ts, const int sz, Payload pl) {
 	src_id = s;
 	dst_id = d;
 	vc_id = vc;
 	timestamp = ts;
 	size = sz;
 	flit_left = sz;
+	payload = pl;
 	use_low_voltage_path = false;
     }
 };

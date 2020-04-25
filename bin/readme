@@ -1,0 +1,92 @@
+Traffic table format
+src	dst	pir	por	t_on	t_off	t_period	payload_type	payload_data
+
+Note: src and dst are compulsary
+default values:
+	pir:	0.01
+	por: 	0.01
+	t_on:	0
+	t_off:	reset_time + simulation_time
+	t_period:	reset_time + simulation_time
+	payload_type:	0
+	payload_data:	-1 (Only valid if payload_type is write)
+
+refer to conventions to see payload_type values
+
+To send a single packet at cycle c, set t_on = c-1, t_off = c+1, t_period = reset_time + simulation_time
+The behavior repeats after t_period as packets are sent by first taking current_cycle%t_period.
+
+----------------------------------------------------------------------------------------------------
+
+Test files
+
+2_packets	: sends exaclty two packets
+single_packet	: sends exactly one packet
+memory		: performs a mix of reads and writes
+repeated_packets: repeatedly sends default packets between two noded
+repeated_reads	: repeatedly sends read requests along with one write request. Initial read requests fail but subsequent requests succeed.
+
+-----------------------------------------------------------------------------------------------------
+
+Changelog
+
+Utils.h
+	Added display for flit payload in template
+
+DataStructs.h
+	Added type field in Payload
+	Payload now has type and data. Refer to GloablParams.h for valid types.
+	Modified == operator for Payload
+	Added Payload to Flit
+	Added payload to Packet
+	Modfied constructor and make() for struct Packet to include Payload
+
+GlobalParams.h
+	Added #define for Payload types. Lines [93, 97]
+
+GlobalTrafficTable.h
+	Added Payload field to struct Communication
+	Modified signature of getCumulativePirPor to include Payload
+
+GlobalTrafficTable.cpp
+	Modified load() method to incorporate additional payload related fields. Lines [37, 41] and [86, 99]
+	Modfied signature of getCumulativePirPor() to match the .h file
+	Modified lines [126, 128] in getCumulativePirPor() to store Payload also along with destination and cpirnpor
+
+
+ProcessingElement.h
+	Added 2 more registers to PE: dataAvailable and data.
+	dataAvailble is a flag initially set to false. After a write, it is flipped to true.
+	data is a integer to store the data in PE. It is initially set to -1. It is updated every time a write is made.
+	Added declaration of 5 new functions. Lines [65, 69]. Refer to ProcessingElement.cpp for details.
+
+ProcessingElement.cpp
+	modified rxprocess() line 24 to initialize dataAvailable to false during reset
+	modified rxprocess() line 28 to call receive() to handle requests
+	modified txprocess() line 41 to initialize data to -1 during reset phase
+	modifed nextFlit() to add Payload from packet to flit of the same packet
+	modified data type of dst_prob in canShot() to include Payload field. Line 153
+	modifed canShot() lines [161, 164] to include support for Payload
+	Implemented receive() in lines [510, 538]
+		receive only works on the last flit in packet i.e. TAIL_FLIT.
+		Depending on the type in the payload of flit, one of four methods are called. These are described below.
+	Implemented handleDefault() in lines [540, 543]
+		handleDefault() is used when the payload type is deafault or not reserved. Nothing special needs to be done.
+		These packets represent normal communication packets. No memory operations are performed.
+		Information is about the flit is added to LOG.
+	Implemented handleWrite() in lines [545, 552]
+		Sets dataAvailable to true.
+		Updates data and entry is added to LOG.
+	Implemented handleReadReq() in lines [554, 575]
+		If dataAvailable is false, request is ignored
+		Else a new packet is created with Payload having data as data value of PE. This packet is then pushed to packet_queue.
+		LOG is updated accordingly
+	Implemented handleReadReply() in lines [557, 580]
+		LOG is upadted to specify the data received
+
+-----------------------------------------------------------------------------------------------------
+
+To run:
+
+Go /bin
+./noxim -topology MESH -dimx 2 -dimy 2 -traffic table <insert table here> -config ./../personal_configs/my_config.yaml  > log_test

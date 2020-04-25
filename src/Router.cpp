@@ -58,7 +58,7 @@ void Router::rxProcess()
 
 		    // Store the incoming flit in the circular buffer
 		    buffer[i][vc].Push(received_flit);
-		    LOG << " Flit " << received_flit << " collected from Input[" << i << "][" << vc <<"]" << endl;
+		    LOG << "Flit " << received_flit << " collected from Input[" << i << "][" << vc <<"]" << endl;
 
 		    power.bufferRouterPush();
 
@@ -75,7 +75,7 @@ void Router::rxProcess()
 		{
 		    // should not happen with the new TBufferFullStatus control signals    
 		    // except for flit coming from local PE, which don't use it 
-		    LOG << " Flit " << received_flit << " buffer full Input[" << i << "][" << vc <<"]" << endl;
+		    LOG << "Flit " << received_flit << " buffer full Input[" << i << "][" << vc <<"]" << endl;
 		    assert(i== DIRECTION_LOCAL);
 		}
 

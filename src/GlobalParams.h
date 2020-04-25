@@ -90,6 +90,12 @@ using namespace std;
 #define TOKEN_MAX_HOLD         "TOKEN_MAX_HOLD"
 #define TOKEN_PACKET           "TOKEN_PACKET"
 
+// Payloads
+#define PAYLOAD_DEFAULT		0
+#define PAYLOAD_WRITE_DATA	1
+#define PAYLOAD_READ_REQ	2
+#define PAYLOAD_READ_ANS	3
+
 typedef struct {
     pair<double, double> ber;
     int dataRate;
