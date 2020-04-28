@@ -1,5 +1,0 @@
-Flit type and corresponding payload
-0->normal
-1->write
-2->read
-3->read_reply

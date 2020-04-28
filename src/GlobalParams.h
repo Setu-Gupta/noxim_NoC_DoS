@@ -95,6 +95,7 @@ using namespace std;
 #define PAYLOAD_WRITE_DATA	1
 #define PAYLOAD_READ_REQ	2
 #define PAYLOAD_READ_ANS	3
+#define PAYLOAD_MALICIOUS	4
 
 typedef struct {
     pair<double, double> ber;

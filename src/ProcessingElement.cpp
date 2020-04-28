@@ -530,6 +530,10 @@ void ProcessingElement::receive(Flit flit)
 				LOG << "type read_reply\n";
 				handleReadReply(flit);
 				break;
+			case PAYLOAD_MALICIOUS:
+				LOG << "UNDER ATTACK!\n";
+				handleAttack(flit);
+				break;
 			default:
 				LOG << "type Not reserved!\n";
 				handleDefault(flit);
@@ -544,6 +548,7 @@ void ProcessingElement::handleDefault(Flit flit)
 
 void ProcessingElement::handleWrite(Flit flit)
 {
+	assert(flit.payload.type == PAYLOAD_WRITE_DATA);
 	dataAvailable = true;
 	LOG << "Got write request at " << local_id << " from " << flit.src_id << endl;
 	int old_data = data;
@@ -553,6 +558,7 @@ void ProcessingElement::handleWrite(Flit flit)
 
 void ProcessingElement::handleReadReq(Flit flit)
 {
+	assert(flit.payload.type == PAYLOAD_READ_REQ);
 	LOG << "Got read request at " << local_id << " from " << flit.src_id << endl;
 	if(!dataAvailable)
 		LOG << "Data not available. Ignoring request!" << endl;
@@ -576,5 +582,26 @@ void ProcessingElement::handleReadReq(Flit flit)
 
 void ProcessingElement::handleReadReply(Flit flit)
 {
+	assert(flit.payload.type == PAYLOAD_READ_ANS);
 	LOG << "Got read reply at " << local_id << " from " << flit.src_id << " with data as " << flit.payload.data << endl;
+}
+
+void ProcessingElement::handleAttack(Flit flit)
+{
+	assert(flit.payload.type == PAYLOAD_MALICIOUS);
+	LOG << "Attacking at " << local_id << ". Collaborating with " << flit.src_id << endl;
+	
+	int attack_count = flit.payload.data; 	// Keeps track of malicious packet circulated in current cycle
+	LOG << "Received packet #" << attack_count << " in attack." << endl;
+	
+	Packet packet;	// Packet with reply data
+    	double now = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;	// Get current time stamp
+        int vc = randInt(0,GlobalParams::n_virtual_channels-1);
+	Payload pl;	// Make payload 
+	pl.data = attack_count + 1;	// Increase packet count
+	pl.type = PAYLOAD_MALICIOUS;
+	packet.make(local_id, flit.src_id, vc, now, 2, pl);
+
+	packet_queue.push(packet);	//Push packet in queue
+	transmittedAtPreviousCycle = true;
 }

@@ -1,0 +1,34 @@
+Payload type and corresponding identification
+0->normal
+1->write
+2->read
+3->read_reply
+4->malicious 2 cycle
+
+Descriptions:
+
+0. Normal
+	This is a generic packet with no significance.
+	Data field is initialized to -1.
+	NOTE:	If payload type is not reserved/specified, it is treated as Normal type.
+		Type is initialized to 0 or specified value (Value should not be reserved type).
+
+1. Write
+	This packet signifies a write from source to destination.
+	Data field specifies the data to be written. (32bit signed int type value).
+	If Data is not specified, it is initialized to -1.
+
+2. Read
+	This packet signifies a read from source to destination.
+	Data field is initialized to -1.
+
+3. Read Reply
+	This packet signifies a read reply from source to destination.
+	Data field specifies the read data. (32bit signed int type value).
+	NOTE: This type cannot be specified in Traffic Table. This will raise an error.
+
+4. Malicious 2 Cycle
+	This packet signifies an ongoint attack between source and destination.
+	Data field specifies the packet count of current packet. It is initialized to 1.
+	USAGE:	Send one packet from src to dst using Traffic Table.
+		The code will then automatically continue the chain of packets by generating new packets one after another.

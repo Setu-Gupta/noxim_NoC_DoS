@@ -86,6 +86,7 @@ bool GlobalTrafficTable::load(const char *fname)
 	
 	  // Custom Payload Type
 	  if (params >= 8) {
+	    assert(payload_type != PAYLOAD_READ_ANS);
 	    communication.payload.type = payload_type;
 	  } else
 	    communication.payload.type = PAYLOAD_DEFAULT;
@@ -96,6 +97,11 @@ bool GlobalTrafficTable::load(const char *fname)
 	    communication.payload.data = payload_data;
 	  } else
 	    communication.payload.data = -1;
+
+	  // Initialise packet count for malicious 2 node cycle
+	  if(payload_type == PAYLOAD_MALICIOUS){
+		  communication.payload.data = 1;
+	  }
 	  
 	  // Add this communication to the vector of communications
 	  traffic_table.push_back(communication);

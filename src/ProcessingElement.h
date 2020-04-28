@@ -67,6 +67,7 @@ SC_MODULE(ProcessingElement)
     void handleReadReq(Flit flit);
     void handleReadReply(Flit flit);
     void handleDefault(Flit flit);
+    void handleAttack(Flit flit);
 
     GlobalTrafficTable *traffic_table;	// Reference to the Global traffic Table
     bool never_transmit;	// true if the PE does not transmit any packet 

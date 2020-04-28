@@ -25,7 +25,11 @@ single_packet	: sends exactly one packet
 memory		: performs a mix of reads and writes
 repeated_packets: repeatedly sends default packets between two noded
 repeated_reads	: repeatedly sends read requests along with one write request. Initial read requests fail but subsequent requests succeed.
-
+attack		: This set contains 3 files
+			only_attack	: This just initiates a cycle of packets between nodes 0 and 3
+			only_com	: This models general communication between two nodes
+			attack_and_com	: This models general communication in presence of an ongoing attack
+			
 -----------------------------------------------------------------------------------------------------
 
 Changelog
@@ -58,7 +62,7 @@ ProcessingElement.h
 	Added 2 more registers to PE: dataAvailable and data.
 	dataAvailble is a flag initially set to false. After a write, it is flipped to true.
 	data is a integer to store the data in PE. It is initially set to -1. It is updated every time a write is made.
-	Added declaration of 5 new functions. Lines [65, 69]. Refer to ProcessingElement.cpp for details.
+	Added declaration of 6 new functions. Lines [65, 69]. Refer to ProcessingElement.cpp for details.
 
 ProcessingElement.cpp
 	modified rxprocess() line 24 to initialize dataAvailable to false during reset
@@ -67,22 +71,26 @@ ProcessingElement.cpp
 	modifed nextFlit() to add Payload from packet to flit of the same packet
 	modified data type of dst_prob in canShot() to include Payload field. Line 153
 	modifed canShot() lines [161, 164] to include support for Payload
-	Implemented receive() in lines [510, 538]
+	Implemented receive()
 		receive only works on the last flit in packet i.e. TAIL_FLIT.
-		Depending on the type in the payload of flit, one of four methods are called. These are described below.
-	Implemented handleDefault() in lines [540, 543]
+		Depending on the type in the payload of flit, one of the following methods are called. These are described below.
+	Implemented handleDefault()
 		handleDefault() is used when the payload type is deafault or not reserved. Nothing special needs to be done.
 		These packets represent normal communication packets. No memory operations are performed.
 		Information is about the flit is added to LOG.
-	Implemented handleWrite() in lines [545, 552]
+	Implemented handleWrite()
 		Sets dataAvailable to true.
 		Updates data and entry is added to LOG.
-	Implemented handleReadReq() in lines [554, 575]
+	Implemented handleReadReq()
 		If dataAvailable is false, request is ignored
 		Else a new packet is created with Payload having data as data value of PE. This packet is then pushed to packet_queue.
 		LOG is updated accordingly
-	Implemented handleReadReply() in lines [557, 580]
+	Implemented handleReadReply()
 		LOG is upadted to specify the data received
+	Implemented handleAttack()
+		This method is called when a malious packet is received by the PE.
+		This generates a continous cycle between the source of the packet and local PE.
+		Local PE sends a new malicious packet to source and the cycle continues.
 
 -----------------------------------------------------------------------------------------------------
 
