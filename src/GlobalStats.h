@@ -27,6 +27,9 @@ class GlobalStats {
     // Returns the aggregated average delay (cycles)
     double getAverageDelay();
 
+    // Returns the aggregated average delay (cycles) for non malicious packets
+    double getAverageDelayNormal();
+
     // Returns the aggragated average delay (cycles) for communication src_id->dst_id
     double getAverageDelay(const int src_id, const int dst_id);
 
@@ -37,6 +40,14 @@ class GlobalStats {
     // node_id. Returns -1 if node_id is not destination of any
     // communication
     double getMaxDelay(const int node_id);
+
+    // Returns the max delay for non malicious packets
+    double getMaxDelayNormal();
+
+    // Returns the max delay (cycles) experimented by destination for non malicious packets
+    // node_id. Returns -1 if node_id is not destination of any
+    // communication
+    double getMaxDelayNormal(const int node_id);
 
     // Returns the max delay (cycles) for communication src_id->dst_id
     double getMaxDelay(const int src_id, const int dst_id);

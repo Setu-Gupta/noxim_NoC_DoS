@@ -92,6 +92,32 @@ ProcessingElement.cpp
 		This generates a continous cycle between the source of the packet and local PE.
 		Local PE sends a new malicious packet to source and the cycle continues.
 
+Stats.h
+	Added following declaration for non malicious packet statistics
+	Added getAverageDelayNormal() declaration
+	Added getMaxDelayNormal() declaration
+	Added getReceivedPacketsNormal() declaration
+
+Stats.cpp
+	Added implementation for methods used for non malicious packet statistics
+	Added getAverageDelayNormal() implementation
+	Added getMaxDelayNormal() implementation
+	Added getReceivedPacketsNormal() implementation
+
+GlobalStats.h
+	Added following declaration for non malicious packet statistics
+	Added getAverageDelayNormal() declaration
+	Added getMaxDelayNormal() declaration
+	Added getMaxDelayNormal(int) declaration
+	
+
+GlobalStats.cpp
+	Added implementation for methods used for non malicious packet statistics
+	Added getAverageDelayNormal() implementation
+	Added getMaxDelayNormal() implementation
+	Added getMaxDelayNormal(int) implementation
+	Modified showStats() to show non malicious stats as well
+	
 -----------------------------------------------------------------------------------------------------
 
 To run:

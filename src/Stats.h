@@ -23,6 +23,7 @@ struct CommHistory {
      vector < double >delays;
     unsigned int total_received_flits;
     double last_received_flit_time;
+    bool isMalicious;	// True if the flit was malicious
 };
 
 class Stats {
@@ -44,12 +45,18 @@ class Stats {
     // Returns the average delay (cycles) for the current node
     double getAverageDelay();
 
+    // Returns the average delay (cycles) for the current node only counting non malicious packets
+    double getAverageDelayNormal();
+
     // Returns the max delay for the current node as regards the
     // communication whose source node is src_id
     double getMaxDelay(const int src_id);
 
     // Returns the max delay (cycles) for the current node
     double getMaxDelay();
+
+    // Returns the max delay (cycles) for the current node only counting non malicious packets
+    double getMaxDelayNormal();
 
     // Returns the average throughput (flits/cycle) for the current node
     // and for the communication whose source is src_id
@@ -58,11 +65,14 @@ class Stats {
     // Returns the average throughput (flits/cycle) for the current node
     double getAverageThroughput();
 
+    // Returns the number of received flits from current node
+    unsigned int getReceivedFlits();
+
     // Returns the number of received packets from current node
     unsigned int getReceivedPackets();
 
-    // Returns the number of received flits from current node
-    unsigned int getReceivedFlits();
+    // Returns the number of received packets from current node only counting non malicious packets
+    unsigned int getReceivedPacketsNormal();
 
     // Returns the number of communications whose destination is the
     // current node

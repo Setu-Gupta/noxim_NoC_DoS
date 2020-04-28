@@ -31,6 +31,7 @@ void Stats::receivedFlit(const double arrival_time,
 	// initialize CommHist structure
 	CommHistory ch;
 
+	ch.isMalicious = (flit.payload.type == PAYLOAD_MALICIOUS);
 	ch.src_id = flit.src_id;
 	ch.total_received_flits = 0;
 	chist.push_back(ch);
@@ -72,6 +73,19 @@ double Stats::getAverageDelay()
     return avg / (double) getReceivedPackets();
 }
 
+double Stats::getAverageDelayNormal()
+{
+    double avg = 0.0;
+
+    for (unsigned int k = 0; k < chist.size(); k++) {
+	unsigned int samples = chist[k].delays.size();
+	if (samples && !chist[k].isMalicious)			// Only pick non malicious packets
+	    avg += (double) samples *getAverageDelay(chist[k].src_id);
+    }
+
+    return avg / (double) getReceivedPackets();
+}
+
 double Stats::getMaxDelay(const int src_id)
 {
     double maxd = -1.0;
@@ -94,6 +108,22 @@ double Stats::getMaxDelay()
     for (unsigned int k = 0; k < chist.size(); k++) {
 	unsigned int samples = chist[k].delays.size();
 	if (samples) {
+	    double m = getMaxDelay(chist[k].src_id);
+	    if (m > maxd)
+		maxd = m;
+	}
+    }
+
+    return maxd;
+}
+
+double Stats::getMaxDelayNormal()
+{
+    double maxd = -1.0;
+
+    for (unsigned int k = 0; k < chist.size(); k++) {
+	unsigned int samples = chist[k].delays.size();
+	if (samples && !chist[k].isMalicious) {		// Only pick non malicious packets
 	    double m = getMaxDelay(chist[k].src_id);
 	    if (m > maxd)
 		maxd = m;
@@ -140,6 +170,17 @@ unsigned int Stats::getReceivedPackets()
 
     for (unsigned int i = 0; i < chist.size(); i++)
 	n += chist[i].delays.size();
+
+    return n;
+}
+
+unsigned int Stats::getReceivedPacketsNormal()
+{
+    int n = 0;
+
+    for (unsigned int i = 0; i < chist.size(); i++)
+	    if(!chist[i].isMalicious)			// Only count if not malicious
+		n += chist[i].delays.size();
 
     return n;
 }

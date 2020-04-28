@@ -66,6 +66,52 @@ double GlobalStats::getAverageDelay()
     return avg_delay;
 }
 
+double GlobalStats::getAverageDelayNormal()
+{
+    unsigned int total_packets = 0;
+    double avg_delay = 0.0;
+
+    if (GlobalParams::topology == TOPOLOGY_MESH)
+    {
+	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+	    for (int x = 0; x < GlobalParams::mesh_dim_x; x++) 
+	    {
+		unsigned int received_packets =
+		    noc->t[x][y]->r->stats.getReceivedPacketsNormal();
+
+		if (received_packets) 
+		{
+		    avg_delay +=
+			received_packets *
+			noc->t[x][y]->r->stats.getAverageDelayNormal();
+		    total_packets += received_packets;
+		}
+	    }
+    }
+    else // other delta topologies
+    { 
+	for (int y = 0; y < GlobalParams::n_delta_tiles; y++)
+	{
+	    unsigned int received_packets =
+		noc->core[y]->r->stats.getReceivedPacketsNormal();
+
+	    if (received_packets) 
+	    {
+		avg_delay +=
+		    received_packets *
+		    noc->core[y]->r->stats.getAverageDelayNormal();
+		total_packets += received_packets;
+	    }
+	}
+
+    }
+
+
+    avg_delay /= (double) total_packets;
+
+    return avg_delay;
+}
+
 
 
 double GlobalStats::getAverageDelay(const int src_id,
@@ -130,6 +176,64 @@ double GlobalStats::getMaxDelay(const int node_id)
 	    noc->core[node_id]->r->stats.getReceivedPackets();
 	if (received_packets)
 	    return noc->core[node_id]->r->stats.getMaxDelay();
+	else
+	    return -1.0;
+    }
+
+}
+
+double GlobalStats::getMaxDelayNormal()
+{
+    double maxd = -1.0;
+
+    if (GlobalParams::topology == TOPOLOGY_MESH) 
+    {
+	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+	    for (int x = 0; x < GlobalParams::mesh_dim_x; x++) 
+	    {
+		Coord coord;
+		coord.x = x;
+		coord.y = y;
+		int node_id = coord2Id(coord);
+		double d = getMaxDelayNormal(node_id);
+		if (d > maxd)
+		    maxd = d;
+	    }
+
+    }
+    else  // other delta topologies 
+    {
+	for (int y = 0; y < GlobalParams::n_delta_tiles; y++)
+	{
+	    double d = getMaxDelayNormal(y);
+	    if (d > maxd)
+		maxd = d;
+	}
+    }
+
+    return maxd;
+}
+
+double GlobalStats::getMaxDelayNormal(const int node_id)
+{
+    if (GlobalParams::topology == TOPOLOGY_MESH) 
+    {
+	Coord coord = id2Coord(node_id);
+
+	unsigned int received_packets =
+	    noc->t[coord.x][coord.y]->r->stats.getReceivedPacketsNormal();
+
+	if (received_packets)
+	    return noc->t[coord.x][coord.y]->r->stats.getMaxDelayNormal();
+	else
+	    return -1.0;
+    }
+    else // other delta topologies
+    {
+	unsigned int received_packets =
+	    noc->core[node_id]->r->stats.getReceivedPacketsNormal();
+	if (received_packets)
+	    return noc->core[node_id]->r->stats.getMaxDelayNormal();
 	else
 	    return -1.0;
     }
@@ -498,6 +602,8 @@ void GlobalStats::showStats(std::ostream & out, bool detailed)
     out << "% Average wireless utilization: " << getWirelessPackets()/(double)getReceivedPackets() << endl;
     out << "% Global average delay (cycles): " << getAverageDelay() << endl;
     out << "% Max delay (cycles): " << getMaxDelay() << endl;
+    out << "% Global average delay for non malicious packets (cycles): " << getAverageDelayNormal() << endl;
+    out << "% Max delay for non malicious packets (cycles): (cycles): " << getMaxDelayNormal() << endl;
     out << "% Network throughput (flits/cycle): " << getAggregatedThroughput() << endl;
     out << "% Average IP throughput (flits/cycle/IP): " << getThroughput() << endl;
     out << "% Total energy (J): " << getTotalPower() << endl;
