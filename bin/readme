@@ -29,6 +29,9 @@ attack		: This set contains 3 files
 			only_attack	: This just initiates a cycle of packets between nodes 0 and 3
 			only_com	: This models general communication between two nodes
 			attack_and_com	: This models general communication in presence of an ongoing attack
+attack2		: This set contains files
+			6accelkmp.txt0_1.txt			: This models normal communication in network
+			6accelkmp.txt0_1.txt_with_attack	: This models attack along side normal communication.
 			
 -----------------------------------------------------------------------------------------------------
 
@@ -118,6 +121,20 @@ GlobalStats.cpp
 	Added getMaxDelayNormal(int) implementation
 	Modified showStats() to show non malicious stats as well
 	
+-----------------------------------------------------------------------------------------------------
+
+Description of attack:
+	The attack is continous back and forth of packets between two PEs.
+	The initial packet is sent from src to dst as specified by the traffic table entry.
+	The following reply and requests are made automatically in code.
+	This generates a constant back and forth. The attack proceeds as follows.
+		1. PE1 sends packet to PE2.
+		2. This triggers PE2 to reply back PE1 with another malicious packet
+		3. This reply packet then triggers PE1 to again send a packet to PE2.
+		4. Attack follows from step 2
+	This genrates lots of packets packets in the network. These packets compete with non malicious packets for resources.
+	As a result the non malicious packets face delays.
+
 -----------------------------------------------------------------------------------------------------
 
 To run:
