@@ -32,7 +32,8 @@ attack		: This set contains 3 files
 attack2		: This set contains files
 			6accelkmp.txt0_1.txt			: This models normal communication in network
 			6accelkmp.txt0_1.txt_with_attack	: This models attack along side normal communication.
-			
+traffic_table	: This is a model set of files for various scenarios.
+
 -----------------------------------------------------------------------------------------------------
 
 Changelog
@@ -71,7 +72,7 @@ ProcessingElement.cpp
 	modified rxprocess() line 24 to initialize dataAvailable to false during reset
 	modified rxprocess() line 28 to call receive() to handle requests
 	modified txprocess() line 41 to initialize data to -1 during reset phase
-	modifed nextFlit() to add Payload from packet to flit of the same packet
+	modifed nextFlit() to add Payload from packet to flit of the same packet and to update LOG for malicious packet
 	modified data type of dst_prob in canShot() to include Payload field. Line 153
 	modifed canShot() lines [161, 164] to include support for Payload
 	Implemented receive()

@@ -83,6 +83,9 @@ Flit ProcessingElement::nextFlit()
     else
 	flit.flit_type = FLIT_TYPE_BODY;
 
+    if(flit.flit_type == FLIT_TYPE_HEAD && flit.payload.type == PAYLOAD_MALICIOUS)
+	LOG << "Sending MALICIOUS packet!" << endl;
+
     packet_queue.front().flit_left--;
     if (packet_queue.front().flit_left == 0)
 	packet_queue.pop();
