@@ -33,6 +33,7 @@ attack2		: This set contains files
 			6accelkmp.txt0_1.txt			: This models normal communication in network
 			6accelkmp.txt0_1.txt_with_attack	: This models attack along side normal communication.
 traffic_table	: This is a model set of files for various scenarios.
+to_test		: This is a model set of files for various scenarios. In all the files pir = 0, hence no packet is generated.
 
 -----------------------------------------------------------------------------------------------------
 
