@@ -33,7 +33,21 @@ attack2		: This set contains files
 			6accelkmp.txt0_1.txt			: This models normal communication in network
 			6accelkmp.txt0_1.txt_with_attack	: This models attack along side normal communication.
 traffic_table	: This is a model set of files for various scenarios.
-to_test		: This is a model set of files for various scenarios. In all the files pir = 0, hence no packet is generated.
+to_test		: files on root		: This is a model set of files for various scenarios. In all the files pir = 0, hence no packet is generated.
+		  generated_files/. 	: This directory contains updated versions of previous files with revised pir value. 
+filed_modifier.py	: Explained below!
+
+-----------------------------------------------------------------------------------------------------
+
+Tools
+
+field_modier.py	: Location 	-> (installation root)/bin/traffic_tables/.
+		  Dependencies	-> python3 (3.2+)
+		  		   os.path for python3
+		  Function	-> Interactive tool to modify fields of traffic_table
+		  Usage		-> (Interactive) Follow the prompt instructions
+		  How to run	-> On shell enter the following command "python3 path/to/field_modifier.py"
+		  Notes		-> The paths entered in the tool, if relative, are considered w.r.t directory of the .py file
 
 -----------------------------------------------------------------------------------------------------
 
