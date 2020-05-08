@@ -1,7 +1,7 @@
 Traffic table format
 src	dst	pir	por	t_on	t_off	t_period	payload_type	payload_data
 
-Note: src and dst are compulsary
+Note: src and dst are compulsory
 default values:
 	pir:	0.01
 	por: 	0.01
@@ -20,10 +20,10 @@ The behavior repeats after t_period as packets are sent by first taking current_
 
 Test files
 
-2_packets	: sends exaclty two packets
+2_packets	: sends exactly two packets
 single_packet	: sends exactly one packet
 memory		: performs a mix of reads and writes
-repeated_packets: repeatedly sends default packets between two noded
+repeated_packets: repeatedly sends default packets between two nodes
 repeated_reads	: repeatedly sends read requests along with one write request. Initial read requests fail but subsequent requests succeed.
 attack		: This set contains 3 files
 			only_attack	: This just initiates a cycle of packets between nodes 0 and 3
@@ -34,14 +34,17 @@ attack2		: This set contains files
 			6accelkmp.txt0_1.txt_with_attack	: This models attack along side normal communication.
 traffic_table	: This is a model set of files for various scenarios.
 to_test		: files on root		: This is a model set of files for various scenarios. In all the files pir = 0, hence no packet is generated.
-		  generated_files/. 	: This directory contains updated versions of previous files with revised pir value. 
-filed_modifier.py	: Explained below!
+		  generated_files/. 	: This directory contains updated versions of previous files with revised pir value.
+		  FFT_pir/.		: This directory has multiple variants of Noxim_SplashFFT_64.txt with various pir values.
+		  			  The naming convention if FFT_<pir value>
+full_communication	: This contains files and corresponding logs for tables representing full communication (Explained below).
+
 
 -----------------------------------------------------------------------------------------------------
 
 Tools
 
-field_modier.py	: Location 	-> (installation root)/bin/traffic_tables/.
+field_modier.py	: Location 	-> (installation root)/tools/.
 		  Dependencies	-> python3 (3.2+)
 		  		   os.path for python3
 		  Function	-> Interactive tool to modify fields of traffic_table
@@ -49,9 +52,21 @@ field_modier.py	: Location 	-> (installation root)/bin/traffic_tables/.
 		  How to run	-> On shell enter the following command "python3 path/to/field_modifier.py"
 		  Notes		-> The paths entered in the tool, if relative, are considered w.r.t directory of the .py file
 
+create_full_comm_table.py	: Location 	-> (installation root)/tools/.
+		  		  Dependencies	-> python3 (3.2+)
+		  		  Function	-> Interactive tool to generate traffic_table with full communication.
+				  		   Full communication refers to every node communication with every other node on every cycle.
+		  		  Usage		-> The tools takes 3 arguments. These are
+				  		   Arg 1: x dimension of mesh network
+				  		   Arg 2: y dimension of mesh network
+						   Arg 3: Simulation time (in cycles)
+		  		  How to run	-> On shell enter the following command
+				  			"python3 path/to/field_modifier.py arg1 arg2 arg3 > output_file".
+				  		   Replace arg1 with value for arg1 and so on...
+
 -----------------------------------------------------------------------------------------------------
 
-Changelog
+Change log
 
 Utils.h
 	Added display for flit payload in template
@@ -62,7 +77,7 @@ DataStructs.h
 	Modified == operator for Payload
 	Added Payload to Flit
 	Added payload to Packet
-	Modfied constructor and make() for struct Packet to include Payload
+	Modified constructor and make() for struct Packet to include Payload
 
 GlobalParams.h
 	Added #define for Payload types. Lines [93, 97]
@@ -73,7 +88,7 @@ GlobalTrafficTable.h
 
 GlobalTrafficTable.cpp
 	Modified load() method to incorporate additional payload related fields. Lines [37, 41] and [86, 99]
-	Modfied signature of getCumulativePirPor() to match the .h file
+	Modified signature of getCumulativePirPor() to match the .h file
 	Modified lines [126, 128] in getCumulativePirPor() to store Payload also along with destination and cpirnpor
 
 
@@ -94,7 +109,7 @@ ProcessingElement.cpp
 		receive only works on the last flit in packet i.e. TAIL_FLIT.
 		Depending on the type in the payload of flit, one of the following methods are called. These are described below.
 	Implemented handleDefault()
-		handleDefault() is used when the payload type is deafault or not reserved. Nothing special needs to be done.
+		handleDefault() is used when the payload type is default or not reserved. Nothing special needs to be done.
 		These packets represent normal communication packets. No memory operations are performed.
 		Information is about the flit is added to LOG.
 	Implemented handleWrite()
@@ -105,10 +120,10 @@ ProcessingElement.cpp
 		Else a new packet is created with Payload having data as data value of PE. This packet is then pushed to packet_queue.
 		LOG is updated accordingly
 	Implemented handleReadReply()
-		LOG is upadted to specify the data received
+		LOG is updated to specify the data received
 	Implemented handleAttack()
-		This method is called when a malious packet is received by the PE.
-		This generates a continous cycle between the source of the packet and local PE.
+		This method is called when a malicious packet is received by the PE.
+		This generates a continuous cycle between the source of the packet and local PE.
 		Local PE sends a new malicious packet to source and the cycle continues.
 
 Stats.h
@@ -140,7 +155,7 @@ GlobalStats.cpp
 -----------------------------------------------------------------------------------------------------
 
 Description of attack:
-	The attack is continous back and forth of packets between two PEs.
+	The attack is continuous back and forth of packets between two PEs.
 	The initial packet is sent from src to dst as specified by the traffic table entry.
 	The following reply and requests are made automatically in code.
 	This generates a constant back and forth. The attack proceeds as follows.
@@ -148,7 +163,7 @@ Description of attack:
 		2. This triggers PE2 to reply back PE1 with another malicious packet
 		3. This reply packet then triggers PE1 to again send a packet to PE2.
 		4. Attack follows from step 2
-	This genrates lots of packets packets in the network. These packets compete with non malicious packets for resources.
+	This generates lots of packets packets in the network. These packets compete with non malicious packets for resources.
 	As a result the non malicious packets face delays.
 
 -----------------------------------------------------------------------------------------------------
