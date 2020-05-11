@@ -20,10 +20,13 @@ using namespace std;
 
 struct CommHistory {
     int src_id;
-     vector < double >delays;
-    unsigned int total_received_flits;
+     vector < double >delays;	// Delays for all packets (normal and malicious)
+    unsigned int total_received_flits;	// Total flits including normal and malicious both
     double last_received_flit_time;
-    bool isMalicious;	// True if the flit was malicious
+    
+    vector < double > normal_delays;	// Delays for normal packets
+    unsigned int total_received_normal_flits;	// Total normal flits
+    double last_received_normal_flit_time;
 };
 
 class Stats {
@@ -45,6 +48,10 @@ class Stats {
     // Returns the average delay (cycles) for the current node
     double getAverageDelay();
 
+    // Returns the average delay (cycles) for the current node as
+    // regards to the communication whose source is src_id while counting only non malicious packets
+    double getAverageDelayNormal(const int src_id);
+
     // Returns the average delay (cycles) for the current node only counting non malicious packets
     double getAverageDelayNormal();
 
@@ -54,6 +61,10 @@ class Stats {
 
     // Returns the max delay (cycles) for the current node
     double getMaxDelay();
+
+    // Returns the max delay for the current node as regards the
+    // communication whose source node is src_id only counting non malicious packets
+    double getMaxDelayNormal(const int src_id);
 
     // Returns the max delay (cycles) for the current node only counting non malicious packets
     double getMaxDelayNormal();
@@ -68,6 +79,9 @@ class Stats {
     // Returns the number of received flits from current node
     unsigned int getReceivedFlits();
 
+    // Returns the number of received flits from current node only counting non malicious packets
+    unsigned int getReceivedFlitsNormal();
+    
     // Returns the number of received packets from current node
     unsigned int getReceivedPackets();
 

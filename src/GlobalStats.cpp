@@ -106,7 +106,6 @@ double GlobalStats::getAverageDelayNormal()
 
     }
 
-
     avg_delay /= (double) total_packets;
 
     return avg_delay;
@@ -331,6 +330,25 @@ unsigned int GlobalStats::getReceivedPackets()
     return n;
 }
 
+unsigned int GlobalStats::getReceivedPacketsNormal()
+{
+    unsigned int n = 0;
+
+    if (GlobalParams::topology == TOPOLOGY_MESH) 
+    {
+    	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+		for (int x = 0; x < GlobalParams::mesh_dim_x; x++)
+	    n += noc->t[x][y]->r->stats.getReceivedPacketsNormal();
+    }
+    else // other delta topologies
+    {
+    	for (int y = 0; y < GlobalParams::n_delta_tiles; y++)
+	    n += noc->core[y]->r->stats.getReceivedPacketsNormal();
+    }
+
+    return n;
+}
+
 unsigned int GlobalStats::getReceivedFlits()
 {
     unsigned int n = 0;
@@ -349,6 +367,33 @@ unsigned int GlobalStats::getReceivedFlits()
 	for (int y = 0; y < GlobalParams::n_delta_tiles; y++)
 	{
 	    n += noc->core[y]->r->stats.getReceivedFlits();
+#ifdef TESTING
+	    drained_total += noc->core[y]->r->local_drained;
+#endif
+	}
+    }
+
+    return n;
+}
+
+unsigned int GlobalStats::getReceivedFlitsNormal()
+{
+    unsigned int n = 0;
+    if (GlobalParams::topology == TOPOLOGY_MESH) 
+    {
+	for (int y = 0; y < GlobalParams::mesh_dim_y; y++)
+	    for (int x = 0; x < GlobalParams::mesh_dim_x; x++) {
+		n += noc->t[x][y]->r->stats.getReceivedFlitsNormal();
+#ifdef TESTING
+		drained_total += noc->t[x][y]->r->local_drained;
+#endif
+	    }
+    }
+    else // other delta topologies
+    {
+	for (int y = 0; y < GlobalParams::n_delta_tiles; y++)
+	{
+	    n += noc->core[y]->r->stats.getReceivedFlitsNormal();
 #ifdef TESTING
 	    drained_total += noc->core[y]->r->local_drained;
 #endif
@@ -602,8 +647,12 @@ void GlobalStats::showStats(std::ostream & out, bool detailed)
     out << "% Average wireless utilization: " << getWirelessPackets()/(double)getReceivedPackets() << endl;
     out << "% Global average delay (cycles): " << getAverageDelay() << endl;
     out << "% Max delay (cycles): " << getMaxDelay() << endl;
+    out << "---------------------------------------------------------------------------" << endl;
+    out << "% Total received non malicious packets: " << getReceivedPacketsNormal() << endl;
+    out << "% Total received non malicious flits: " << getReceivedFlitsNormal() << endl;
     out << "% Global average delay for non malicious packets (cycles): " << getAverageDelayNormal() << endl;
-    out << "% Max delay for non malicious packets (cycles): (cycles): " << getMaxDelayNormal() << endl;
+    out << "% Max delay for non malicious packets (cycles): " << getMaxDelayNormal() << endl;
+    out << "---------------------------------------------------------------------------" << endl;
     out << "% Network throughput (flits/cycle): " << getAggregatedThroughput() << endl;
     out << "% Average IP throughput (flits/cycle/IP): " << getThroughput() << endl;
     out << "% Total energy (J): " << getTotalPower() << endl;

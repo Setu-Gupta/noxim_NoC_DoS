@@ -31,19 +31,28 @@ void Stats::receivedFlit(const double arrival_time,
 	// initialize CommHist structure
 	CommHistory ch;
 
-	ch.isMalicious = (flit.payload.type == PAYLOAD_MALICIOUS);
 	ch.src_id = flit.src_id;
 	ch.total_received_flits = 0;
+	ch.total_received_normal_flits = 0;
 	chist.push_back(ch);
 
 	i = chist.size() - 1;
     }
 
     if (flit.flit_type == FLIT_TYPE_HEAD)
-	chist[i].delays.push_back(arrival_time - flit.timestamp);
-
+    chist[i].delays.push_back(arrival_time - flit.timestamp);	// Inserted once per packet as FLIT_TYPE_HEAD
+    
     chist[i].total_received_flits++;
     chist[i].last_received_flit_time = arrival_time - warm_up_time;
+    
+    if(flit.payload.type != PAYLOAD_MALICIOUS)
+    {
+    	if (flit.flit_type == FLIT_TYPE_HEAD)	// Inserted once per packet as FLIT_TYPE_HEAD
+		chist[i].normal_delays.push_back(arrival_time - flit.timestamp);
+
+    	chist[i].total_received_normal_flits++;
+    	chist[i].last_received_normal_flit_time = arrival_time - warm_up_time;
+    }
 }
 
 double Stats::getAverageDelay(const int src_id)
@@ -73,17 +82,31 @@ double Stats::getAverageDelay()
     return avg / (double) getReceivedPackets();
 }
 
+double Stats::getAverageDelayNormal(const int src_id)	// Used normal fields in CommHistory for calculation
+{
+    double sum = 0.0;
+
+    int i = searchCommHistory(src_id);
+
+    assert(i >= 0);
+
+    for (unsigned int j = 0; j < chist[i].normal_delays.size(); j++)
+	sum += chist[i].normal_delays[j];
+
+    return sum / (double) chist[i].normal_delays.size();
+}
+
 double Stats::getAverageDelayNormal()
 {
     double avg = 0.0;
 
     for (unsigned int k = 0; k < chist.size(); k++) {
-	unsigned int samples = chist[k].delays.size();
-	if (samples && !chist[k].isMalicious)			// Only pick non malicious packets
-	    avg += (double) samples *getAverageDelay(chist[k].src_id);
+	unsigned int samples = chist[k].normal_delays.size();
+	if (samples)
+	    avg += (double) samples *getAverageDelayNormal(chist[k].src_id);
     }
 
-    return avg / (double) getReceivedPackets();
+    return avg / (double) getReceivedPacketsNormal();
 }
 
 double Stats::getMaxDelay(const int src_id)
@@ -117,14 +140,29 @@ double Stats::getMaxDelay()
     return maxd;
 }
 
+double Stats::getMaxDelayNormal(const int src_id)	// Uses normal fields of CommHistory for calculation
+{
+    double maxd = -1.0;
+
+    int i = searchCommHistory(src_id);
+
+    assert(i >= 0);
+
+    for (unsigned int j = 0; j < chist[i].normal_delays.size(); j++)
+	if (chist[i].normal_delays[j] > maxd) {
+	    maxd = chist[i].normal_delays[j];
+	}
+    return maxd;
+}
+
 double Stats::getMaxDelayNormal()
 {
     double maxd = -1.0;
 
     for (unsigned int k = 0; k < chist.size(); k++) {
 	unsigned int samples = chist[k].delays.size();
-	if (samples && !chist[k].isMalicious) {		// Only pick non malicious packets
-	    double m = getMaxDelay(chist[k].src_id);
+	if (samples) {
+	    double m = getMaxDelayNormal(chist[k].src_id);
 	    if (m > maxd)
 		maxd = m;
 	}
@@ -179,8 +217,7 @@ unsigned int Stats::getReceivedPacketsNormal()
     int n = 0;
 
     for (unsigned int i = 0; i < chist.size(); i++)
-	    if(!chist[i].isMalicious)			// Only count if not malicious
-		n += chist[i].delays.size();
+	n += chist[i].normal_delays.size();	// Only count normal packets
 
     return n;
 }
@@ -191,6 +228,16 @@ unsigned int Stats::getReceivedFlits()
 
     for (unsigned int i = 0; i < chist.size(); i++)
 	n += chist[i].total_received_flits;
+
+    return n;
+}
+
+unsigned int Stats::getReceivedFlitsNormal()
+{
+    int n = 0;
+
+    for (unsigned int i = 0; i < chist.size(); i++)
+	n += chist[i].total_received_normal_flits;	// Only count normal flits
 
     return n;
 }

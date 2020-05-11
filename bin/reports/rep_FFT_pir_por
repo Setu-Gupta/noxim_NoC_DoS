@@ -1,0 +1,17 @@
++------------+-----------+-----------------+-----------------------------+-------------------+-------------------------+
+| PIR = POR  | Max Delay |    Avg Delay    | Non-Malicious Packets (NMP) |      NMP/PIR      | % increase in Avg Delay |
++------------+-----------+-----------------+-----------------------------+-------------------+-------------------------+
+|   0.000001 | 28/117    | 9.03759/9.26531 | 133/147                     | 133e6/147e6       | 2.428%                  |
+|    0.00001 | 28/2576   | 9.7741/23.6826  | 1483/1506                   | 148.3e6/150.6e6   | 142.3%                  |
+|     0.0001 | 42/219    | 10.7891/14.7576 | 15323/15410                 | 153.23e6/154.1e6  | 36.86%                  |
+|      0.001 | 8081/8056 | 3072.08/2991.5  | 45573/44287                 | 45.573e6/44.287e6 | -2.62%                  |
++------------+-----------+-----------------+-----------------------------+-------------------+-------------------------+
+
+Key: Non-Malicious/Malicious
+2 cycle pipelined attack between node 53 and node 7.
+Run cycles: 10000
+Reset Cycles: 1000
+XY routing
+
+Networks starts to saturate around pir=por=0.0001
+Anomaly for pir=por=0.0001: Maybe some long distance packets are being dropped due to congestion. Hence packets with large delays are reduced. As a result Delay values drop significantly.

@@ -22,6 +22,7 @@ void ProcessingElement::rxProcess()
 	ack_rx.write(0);
 	current_level_rx = 0;
 	dataAvailable = false;
+	attack_pipeline_filled = false;
     } else {
 	if (req_rx.read() == 1 - current_level_rx) {
 	    Flit flit_tmp = flit_rx.read();
@@ -39,6 +40,8 @@ void ProcessingElement::txProcess()
 	current_level_tx = 0;
 	transmittedAtPreviousCycle = false;
 	data = -1;
+	attack_started = false;
+	attack_partner = -1;
     } else {
 	Packet packet;
 
@@ -159,16 +162,38 @@ bool ProcessingElement::canShot(Packet & packet)
 
 	double prob = (double) rand() / RAND_MAX;
 	shot = (prob < threshold);
+	int tmp_dst = -1;	// Temporary variable to store destination
 	if (shot) {
 	    for (unsigned int i = 0; i < dst_prob.size(); i++) {
 		if (prob < get<1>(dst_prob[i])) {
                     int vc = randInt(0,GlobalParams::n_virtual_channels-1);
 		    Payload pl = get<2>(dst_prob[i]);
 		    packet.make(local_id, get<0>(dst_prob[i]), vc, now, getRandomSize(), pl);
+		    tmp_dst = get<0>(dst_prob[i]);
 		    break;
 		}
 	    }
+	    if(packet.payload.type == PAYLOAD_MALICIOUS)
+	    {
+		    LOG << "Started MALICIOUS pipeline!" << endl;
+		    assert(tmp_dst != -1);
+		    attack_started = true;	// Start attack at first malicious payload
+		    attack_partner = tmp_dst;	// Set the partner
+	    }
 	}
+
+	// Fill malicioous pipeline
+	if(attack_started && !attack_pipeline_filled)
+	{
+		assert(attack_partner != -1);
+		Payload pl;	// Make payload 
+		pl.data = 0;	// Initialize packet count
+		pl.type = PAYLOAD_MALICIOUS;
+       		int vc = randInt(0, GlobalParams::n_virtual_channels-1);
+		packet.make(local_id, attack_partner, vc, now, getRandomSize(), pl);
+		shot = true;
+	}
+	
 
 
     	//cout << "Shot value at cycle:" << (int) now << " is:" << (int) shot;
@@ -607,4 +632,10 @@ void ProcessingElement::handleAttack(Flit flit)
 
 	packet_queue.push(packet);	//Push packet in queue
 	transmittedAtPreviousCycle = true;
+	
+	if(attack_started && !attack_pipeline_filled)
+	{
+		attack_pipeline_filled = true;	// Stop inserting more packets as pipeline is filled
+		LOG << "Filled MALICIOUS pipeline!" << endl;
+	}
 }

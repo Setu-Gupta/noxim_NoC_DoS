@@ -35,8 +35,12 @@ attack2		: This set contains files
 traffic_table	: This is a model set of files for various scenarios.
 to_test		: files on root		: This is a model set of files for various scenarios. In all the files pir = 0, hence no packet is generated.
 		  generated_files/. 	: This directory contains updated versions of previous files with revised pir value.
+		  generated_files/with_attack	: This directory has copies of all the previos files with attack scenario.
 		  FFT_pir/.		: This directory has multiple variants of Noxim_SplashFFT_64.txt with various pir values.
 		  			  The naming convention if FFT_<pir value>
+		  FFT_pir/with_attack	: This directory has copies of all the previos files with attack scenario.
+		  FFT_pir_por		: This directory has all the previous files but with por = pir.
+		  FFT_pir_por/with_attack	: Same as before
 full_communication	: This contains files and corresponding logs for tables representing full communication (Explained below).
 
 
@@ -63,6 +67,12 @@ create_full_comm_table.py	: Location 	-> (installation root)/tools/.
 		  		  How to run	-> On shell enter the following command
 				  			"python3 path/to/field_modifier.py arg1 arg2 arg3 > output_file".
 				  		   Replace arg1 with value for arg1 and so on...
+
+run_noxim.sh			: Location 	-> (installation root)/tools/.
+		  		  Dependencies	-> bash
+		  		  Function	-> Tool to run noxim on various files as specified in path (in the .sh file)
+				  Usage		-> Execute directly on any bash compatible shell
+				  Notes		-> If the file doesn't have execute permissions, first do "chmod +x path/to/.sh/file"
 
 -----------------------------------------------------------------------------------------------------
 
@@ -127,19 +137,28 @@ ProcessingElement.cpp
 		Local PE sends a new malicious packet to source and the cycle continues.
 
 Stats.h
+	Modified struct CommHistory to include normal fields i.e. field exclusively for non malicious packets.
 	Added following declaration for non malicious packet statistics
+	Added getAverageDelayNormal(int) declaration
 	Added getAverageDelayNormal() declaration
+	Added getMaxDelayNormal(int) declaration
 	Added getMaxDelayNormal() declaration
 	Added getReceivedPacketsNormal() declaration
+	Added getReceivedFlitsNormal() declaration
 
 Stats.cpp
 	Added implementation for methods used for non malicious packet statistics
+	Added getAverageDelayNormal(int) implementation
 	Added getAverageDelayNormal() implementation
+	Added getMaxDelayNormal(int) implementation
 	Added getMaxDelayNormal() implementation
 	Added getReceivedPacketsNormal() implementation
+	Added getReceivedFlitsNormal() implementation
 
 GlobalStats.h
 	Added following declaration for non malicious packet statistics
+	Added getReceivedPacketsNormal() declaration
+	Added getReceivedFlitsNormal() declaration
 	Added getAverageDelayNormal() declaration
 	Added getMaxDelayNormal() declaration
 	Added getMaxDelayNormal(int) declaration
@@ -150,6 +169,8 @@ GlobalStats.cpp
 	Added getAverageDelayNormal() implementation
 	Added getMaxDelayNormal() implementation
 	Added getMaxDelayNormal(int) implementation
+	Added getReceivedPacketsNormal() implementation
+	Added getReceivedFlitsNormal() implementation
 	Modified showStats() to show non malicious stats as well
 	
 -----------------------------------------------------------------------------------------------------
@@ -165,6 +186,8 @@ Description of attack:
 		4. Attack follows from step 2
 	This generates lots of packets packets in the network. These packets compete with non malicious packets for resources.
 	As a result the non malicious packets face delays.
+	Also to increase the effectiveness of attack, the attack is pipelined.
+	This means that packets are inserted into packet_queue every cycle starting from the first packetr as specified in traffic table till the first malicious reply.
 
 -----------------------------------------------------------------------------------------------------
 
@@ -172,3 +195,9 @@ To run:
 
 Go /bin
 ./noxim -topology MESH -dimx 2 -dimy 2 -traffic table <insert table here> -config ./../personal_configs/my_config.yaml  > log_test
+
+-----------------------------------------------------------------------------------------------------
+
+Reports:
+
+Reports for various test cases are stored in this directory.

@@ -74,6 +74,12 @@ class GlobalStats {
     // Returns the total number of received flits
     unsigned int getReceivedFlits();
 
+    // Returns the total number of received non malicious packets
+    unsigned int getReceivedPacketsNormal();
+
+    // Returns the total number of received non malicious flits
+    unsigned int getReceivedFlitsNormal();
+
     // number of packets that used the wireless network
     unsigned int getWirelessPackets();
 

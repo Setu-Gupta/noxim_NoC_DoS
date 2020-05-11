@@ -45,9 +45,14 @@ SC_MODULE(ProcessingElement)
     bool current_level_tx;	// Current level for Alternating Bit Protocol (ABP)
     queue < Packet > packet_queue;	// Local queue of packets
     bool transmittedAtPreviousCycle;	// Used for distributions with memory
-    bool dataAvailable;		// If PE acts as a memory device, this specifies of data is available
-    int data;			//Stored data
     
+    bool dataAvailable;		// If PE acts as a memory device, this specifies of data is available
+    int data;			// Stored data
+    int attack_partner;		// Colaborator in attack
+    bool attack_started;	// Default value is false. It is set to true when attack packet is picked from traffic table
+    bool attack_pipeline_filled;// Default value is false. It is set to true as soon as the first attack packet gets reply
+
+
     // Functions
     void rxProcess();		// The receiving process
     void txProcess();		// The transmitting process
