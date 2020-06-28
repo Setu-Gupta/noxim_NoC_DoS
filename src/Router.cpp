@@ -36,7 +36,19 @@ void Router::rxProcess()
 	local_drained = 0;
     } 
     else 
-    { 
+    {
+    	Feature_t f;
+    	f.cycle = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+    	f.local_id = local_id;
+    	if(fc->features.find(local_id) == fc->features.end())
+    	{
+    		vector < Feature_t > f_vect{f};
+    		fc->features[local_id] = f_vect;
+    	}
+    	else
+    	{
+    		fc->features[local_id].push_back(f);
+    	}
 	// This process simply sees a flow of incoming flits. All arbitration
 	// and wormhole related issues are addressed in the txProcess()
 	//assert(false);

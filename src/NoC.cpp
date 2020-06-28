@@ -2195,6 +2195,9 @@ void NoC::buildMesh()
 					      GlobalParams::flit_size,
 					      string(GlobalParams::routing_algorithm),
 					      "default");
+	    assert(fc != NULL);
+	    t[i][j]->r->fc = fc;
+	    assert(t[i][j]->r->fc != NULL);
 					      
 
 

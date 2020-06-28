@@ -13,6 +13,7 @@
 #include "GlobalStats.h"
 #include "DataStructs.h"
 #include "GlobalParams.h"
+#include "FeatureCollector.h"
 
 #include <csignal>
 
@@ -52,13 +53,16 @@ int sc_main(int arg_num, char *arg_vet[])
     configure(arg_num, arg_vet);
 
 
+    FeatureCollector fc;
+
     // Signals
     sc_clock clock("clock", GlobalParams::clock_period_ps, SC_PS);
     sc_signal <bool> reset;
 
     // NoC instance
-    n = new NoC("NoC");
+    n = new NoC("NoC", &fc);
 
+    // n->fc = &fc;
     n->clock(clock);
     n->reset(reset);
 
@@ -138,5 +142,8 @@ int sc_main(int arg_num, char *arg_vet[])
 #ifdef DEADLOCK_AVOIDANCE
 	cout << "***** WARNING: DEADLOCK_AVOIDANCE ENABLED!" << endl;
 #endif
+
+    fc.testPrint();
+
     return 0;
 }

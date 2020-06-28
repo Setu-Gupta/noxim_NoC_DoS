@@ -25,6 +25,7 @@
 #include "selectionStrategies/SelectionStrategy.h"
 #include "selectionStrategies/Selection_NOP.h"
 #include "selectionStrategies/Selection_BUFFER_LEVEL.h"
+#include "FeatureCollector.h"
 
 using namespace std;
 
@@ -72,6 +73,8 @@ SC_MODULE(Router)
     unsigned long routed_flits;
     RoutingAlgorithm * routingAlgorithm; 
     SelectionStrategy * selectionStrategy; 
+
+    FeatureCollector * fc = NULL;
     
     // Functions
 
@@ -83,11 +86,12 @@ SC_MODULE(Router)
 		   const unsigned int _max_buffer_size,
 		   GlobalRoutingTable & grt);
 
-    unsigned long getRoutedFlits();	// Returns the number of routed flits 
+
+    unsigned long getRoutedFlits();	// Returns the number of routed flits
 
     // Constructor
 
-    SC_CTOR(Router) {
+    SC_CTOR(Router){
         SC_METHOD(process);
         sensitive << reset;
         sensitive << clock.pos();

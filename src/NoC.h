@@ -87,10 +87,13 @@ SC_MODULE(NoC)
     GlobalRoutingTable grtable;
     GlobalTrafficTable gttable;
 
+    FeatureCollector * fc = NULL;
+
+    SC_HAS_PROCESS(NoC);
 
     // Constructor
 
-    SC_CTOR(NoC) 
+    NoC(sc_module_name name_, FeatureCollector * _fc) : sc_module(name_), fc(_fc)
     {
 
 

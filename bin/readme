@@ -172,7 +172,32 @@ GlobalStats.cpp
 	Added getReceivedPacketsNormal() implementation
 	Added getReceivedFlitsNormal() implementation
 	Modified showStats() to show non malicious stats as well
+
+Main.cpp
+	Added declaration for FeatureCollector
+	Added function call for FeatureCollector to print statistics
+
+FeatureCollector.cpp (Added)
+	Added definition for testPrint method
+
+FeatureCollector.h (Added)
+	Added definitions for FeatureCollector class
+	Added definitions for Feature and port_feature struct
 	
+NoC.h
+	Added FeatureCollector in NoC
+	Changed the format of constructor to accept FeatureCollector as a parameter
+
+NoC.cpp
+	Added code to set FeatureCollector i.e. fc of each router
+
+Router.h
+	Imported FeatureCollector.h
+	Added FeatureCollector to Router
+
+Router.cpp
+	Added code to update FeatureCollector in rxProcess()
+
 -----------------------------------------------------------------------------------------------------
 
 Description of attack:
@@ -201,3 +226,9 @@ Go /bin
 Reports:
 
 Reports for various test cases are stored in this directory.
+
+-----------------------------------------------------------------------------------------------------
+
+Pitfalls:
+
+The current version of makefile does not have dependency on .h files. As a result modifying .h files will not result in compilation. If header files are modifie, make sure that all files which import the said header file are re-compiled.

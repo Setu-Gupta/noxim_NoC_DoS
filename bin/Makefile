@@ -1,6 +1,7 @@
 ##### LIBRARIES CONFIGURATION #####
 
-SYSTEMC := /usr/local/systemc-2.3.1
+# SYSTEMC := /usr/local/systemc-2.3.1
+SYSTEMC := /home/anonymous/noxim/systemC/2.3.1-debug/systemc-2.3.1a
 YAML    := /home/anonymous/noxim/yaml/yaml-cpp
 
 
