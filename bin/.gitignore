@@ -1,3 +1,6 @@
 log
 tmp_logs
 build/*
+features
+../noxim.sublime-project
+../noxim.sublime-workspace

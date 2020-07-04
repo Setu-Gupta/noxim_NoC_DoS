@@ -1,13 +1,30 @@
- #include <FeatureCollector.h>
- using namespace std;
+#include <FeatureCollector.h>
+using namespace std;
 
- void FeatureCollector::testPrint()
- {
- 	map < int, vector < Feature_t > > :: iterator it = features.begin();
- 	for(it = features.begin(); it != features.end(); it++)
- 	{
- 		vector < Feature_t > f_vect = it->second;
- 		if(f_vect.size() != 0)
- 			cout << f_vect[0].print();
-  	}
- }
+void FeatureCollector::testPrint()
+{
+	map < int, vector < Feature_t > > :: iterator it = features.begin();
+	for(it = features.begin(); it != features.end(); it++)
+	{
+		vector < Feature_t > f_vect = it->second;
+		if(f_vect.size() >= 2)
+			cout << f_vect[1].print();
+	}
+}
+
+
+void FeatureCollector::exportFeatures()
+{
+	ofstream feature_file;
+	feature_file.open("features", ios::out | ios::trunc);	// Open a file to write data to
+
+	map < int, vector < Feature_t > > :: iterator it = features.begin();
+	for(it = features.begin(); it != features.end(); it++)
+	{
+		vector < Feature_t > f_vect = it->second;
+		for(Feature_t f: f_vect)
+			feature_file << f.print();
+	}
+
+	feature_file.close();
+}

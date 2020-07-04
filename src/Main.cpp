@@ -143,7 +143,7 @@ int sc_main(int arg_num, char *arg_vet[])
 	cout << "***** WARNING: DEADLOCK_AVOIDANCE ENABLED!" << endl;
 #endif
 
-    fc.testPrint();
+    fc.exportFeatures();
 
     return 0;
 }

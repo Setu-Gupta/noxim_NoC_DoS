@@ -120,6 +120,7 @@ SC_MODULE(Router)
   private:
 
     // performs actual routing + selection
+
     int route(const RouteData & route_data);
 
     // wrappers
@@ -145,6 +146,10 @@ SC_MODULE(Router)
     void ShowBuffersStats(std::ostream & out);
 
     bool connectedHubs(int src_hub, int dst_hub);
+
+    Feature_t current_features; // Current set of features
+    bool features_set_up = false;  // Flag is true if features have been initialized
+    void write_features(); // Writes feature data
 };
 
 #endif

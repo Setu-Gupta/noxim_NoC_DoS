@@ -14,15 +14,24 @@ port_feature_t contains data for an particualar port of a particular router at a
 */
 typedef struct port_feature
 {
-	port_feature() : buffer_capacity(-1), buffer_status(-1) , cycles_since_last_packet(-1) { };
-	
-	int buffer_capacity;	// Maximum size for the buffer
-	int buffer_status;	// Current status of buffer i.e how much the buffer is filled currently
-	int cycles_since_last_packet; // Contains the number of cycles since the last packet. It is set as -1 initially
+
+	port_feature()
+	{
+		buffer_capacity.resize(GlobalParams::n_virtual_channels, -1);
+		buffer_status.resize(GlobalParams::n_virtual_channels, -1);
+		cycles_since_last_flit.resize(GlobalParams::n_virtual_channels, -1);
+	}
+
+	vector <int> buffer_capacity;	// Maximum size for the buffer
+	vector <int> buffer_status;	// Current status of buffer i.e how much the buffer is free currently
+	vector <int> cycles_since_last_flit; // Contains the number of cycles since the last flit. It is set as -1 initially
 
 	string print()
 	{
-		return to_string(buffer_capacity) + ", " + to_string(buffer_status) + ", " + to_string(cycles_since_last_packet);
+		string op = "";
+		for(int i = 0; i < GlobalParams::n_virtual_channels; i++)
+			op += to_string(buffer_capacity[i]) + ", " + to_string(buffer_status[i]) + ", " + to_string(cycles_since_last_flit[i]) + ", ";
+		return op;
 	}
 } port_feature_t;
 
@@ -43,6 +52,8 @@ typedef struct Feature
 		info += to_string(local_id) + ", " +to_string(cycle);
 		for(int i = 0; i < TOTAL_DIRECTIONS; i++)
 			info += ", " + data[i].print();
+		int last_comma_idx = info.rfind(",");
+		info = info.substr(0, last_comma_idx);	// Remove the last comma
 		return info + "\n";
 	} 
 

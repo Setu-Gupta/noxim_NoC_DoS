@@ -24,7 +24,7 @@ void Router::process()
 
 void Router::rxProcess()
 {
-    if (reset.read()) {
+	if (reset.read()) {
 	TBufferFullStatus bfs;
 	// Clear outputs and indexes of receiving protocol
 	for (int i = 0; i < DIRECTIONS + 2; i++) {
@@ -34,73 +34,120 @@ void Router::rxProcess()
 	}
 	routed_flits = 0;
 	local_drained = 0;
+	
+	// Set up features
+	if(!features_set_up)
+	{
+		features_set_up = true;
+		current_features.local_id = local_id;	// Reset feature data
+		current_features.cycle = -1;
+
+		for(int i = 0; i < TOTAL_DIRECTIONS; i++ )	// Iterate over all ports i.e NSEW + local
+			for(int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
+				current_features.data[i].buffer_capacity[vc] = buffer[i][vc].GetMaxBufferSize();
+	}
     } 
     else 
     {
-    	Feature_t f;
-    	f.cycle = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-    	f.local_id = local_id;
-    	if(fc->features.find(local_id) == fc->features.end())
-    	{
-    		vector < Feature_t > f_vect{f};
-    		fc->features[local_id] = f_vect;
-    	}
-    	else
-    	{
-    		fc->features[local_id].push_back(f);
-    	}
-	// This process simply sees a flow of incoming flits. All arbitration
-	// and wormhole related issues are addressed in the txProcess()
-	//assert(false);
-	for (int i = 0; i < DIRECTIONS + 2; i++) {
-	    // To accept a new flit, the following conditions must match:
-	    // 1) there is an incoming request
-	    // 2) there is a free slot in the input buffer of direction i
-	    //LOG<<"****RX****DIRECTION ="<<i<<  endl;
 
-	    if (req_rx[i].read() == 1 - current_level_rx[i])
-	    { 
-		Flit received_flit = flit_rx[i].read();
-		//LOG<<"request opposite to the current_level, reading flit "<<received_flit<<endl;
-
-		int vc = received_flit.vc_id;
-
-		if (!buffer[i][vc].IsFull()) 
+		// This process simply sees a flow of incoming flits. All arbitration
+		// and wormhole related issues are addressed in the txProcess()
+		//assert(false);
+		for (int i = 0; i < DIRECTIONS + 2; i++) 
 		{
+		    // To accept a new flit, the following conditions must match:
+		    // 1) there is an incoming request
+		    // 2) there is a free slot in the input buffer of direction i
+		    //LOG<<"****RX****DIRECTION ="<<i<<  endl;
 
-		    // Store the incoming flit in the circular buffer
-		    buffer[i][vc].Push(received_flit);
-		    LOG << "Flit " << received_flit << " collected from Input[" << i << "][" << vc <<"]" << endl;
+			bool is_chosed_direction_hub = i == DIRECTIONS + 1; // We need this flag later to prevent inserting data for hub
+		    if (req_rx[i].read() == 1 - current_level_rx[i])
+		    { 
+				Flit received_flit = flit_rx[i].read();
+				//LOG<<"request opposite to the current_level, reading flit "<<received_flit<<endl;
 
-		    power.bufferRouterPush();
+				int vc = received_flit.vc_id;
 
-		    // Negate the old value for Alternating Bit Protocol (ABP)
-		    //LOG<<"INVERTING CL FROM "<< current_level_rx[i]<< " TO "<<  1 - current_level_rx[i]<<endl;
-		    current_level_rx[i] = 1 - current_level_rx[i];
+				if (!buffer[i][vc].IsFull()) 
+				{
 
-		    // if a new flit is injected from local PE
-		    if (received_flit.src_id == local_id)
-			power.networkInterface();
+				    // Store the incoming flit in the circular buffer
+				    buffer[i][vc].Push(received_flit);
+				    LOG << "Flit " << received_flit << " collected from Input[" << i << "][" << vc <<"]" << endl;
+
+				    power.bufferRouterPush();
+
+				    // Negate the old value for Alternating Bit Protocol (ABP)
+				    //LOG<<"INVERTING CL FROM "<< current_level_rx[i]<< " TO "<<  1 - current_level_rx[i]<<endl;
+				    current_level_rx[i] = 1 - current_level_rx[i];
+
+				    // if a new flit is injected from local PE
+				    if (received_flit.src_id == local_id)
+						power.networkInterface();
+
+					// Update cycles_since_last_flit in current features
+					if(!is_chosed_direction_hub)
+						current_features.data[i].cycles_since_last_flit[vc] = 0;
+				}
+				else  // buffer full
+				{
+				    // should not happen with the new TBufferFullStatus control signals    
+				    // except for flit coming from local PE, which don't use it 
+				    LOG << "Flit " << received_flit << " buffer full Input[" << i << "][" << vc <<"]" << endl;
+				    assert(i== DIRECTION_LOCAL);
+
+				    // No flit received
+				    if(!is_chosed_direction_hub)
+				    	for(int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
+				    	{
+				    		if(current_features.data[i].cycles_since_last_flit[vc] != -1)
+				    			current_features.data[i].cycles_since_last_flit[vc]++;
+				    	}
+				}
+
+		    }
+		    else
+		    {
+		    	// No flit received
+		    	if(!is_chosed_direction_hub)
+			    	for(int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
+			    	{
+			    		if(current_features.data[i].cycles_since_last_flit[vc] != -1)
+			    			current_features.data[i].cycles_since_last_flit[vc]++;
+			    	}
+		    }
+		    ack_rx[i].write(current_level_rx[i]);
+		    // updates the mask of VCs to prevent incoming data on full buffers
+		    TBufferFullStatus bfs;
+		    for (int vc=0;vc<GlobalParams::n_virtual_channels;vc++)
+			bfs.mask[vc] = buffer[i][vc].IsFull();
+		    buffer_full_status_rx[i].write(bfs);
 		}
 
-		else  // buffer full
-		{
-		    // should not happen with the new TBufferFullStatus control signals    
-		    // except for flit coming from local PE, which don't use it 
-		    LOG << "Flit " << received_flit << " buffer full Input[" << i << "][" << vc <<"]" << endl;
-		    assert(i== DIRECTION_LOCAL);
-		}
-
-	    }
-	    ack_rx[i].write(current_level_rx[i]);
-	    // updates the mask of VCs to prevent incoming data on full buffers
-	    TBufferFullStatus bfs;
-	    for (int vc=0;vc<GlobalParams::n_virtual_channels;vc++)
-		bfs.mask[vc] = buffer[i][vc].IsFull();
-	    buffer_full_status_rx[i].write(bfs);
-	}
+		write_features();
     }
 }
+
+void Router::write_features()
+{
+	current_features.cycle = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;	// Update current cycle
+
+	for(int i = 0; i < TOTAL_DIRECTIONS; i++ )	// Iterate over all ports i.e NSEW + local and upadet buffer status
+		for(int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
+			current_features.data[i].buffer_status[vc] = buffer[i][vc].getCurrentFreeSlots();
+
+	// Store the features
+	if(fc->features.find(local_id) == fc->features.end())	// First time insertion
+	{
+		vector < Feature_t > f_vect{current_features};
+		fc->features[local_id] = f_vect;
+	}
+	else	// Subsequent insertions
+	{
+		fc->features[local_id].push_back(current_features);
+	}
+}
+
 
 void Router::txProcess()
 {

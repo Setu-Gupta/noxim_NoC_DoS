@@ -175,10 +175,11 @@ GlobalStats.cpp
 
 Main.cpp
 	Added declaration for FeatureCollector
-	Added function call for FeatureCollector to print statistics
+	Added function call for FeatureCollector to export statistics
 
 FeatureCollector.cpp (Added)
 	Added definition for testPrint method
+	Added definition for exportFeatures
 
 FeatureCollector.h (Added)
 	Added definitions for FeatureCollector class
@@ -194,9 +195,13 @@ NoC.cpp
 Router.h
 	Imported FeatureCollector.h
 	Added FeatureCollector to Router
+	Added declaration of write_features() method
+	Added declaration for current_features and features_set_up
 
 Router.cpp
 	Added code to update FeatureCollector in rxProcess()
+	Added definition for write_features()
+	Added code in rxProcess() in reset as well as normal part to initialize and update features respectively.
 
 -----------------------------------------------------------------------------------------------------
 
@@ -232,3 +237,12 @@ Reports for various test cases are stored in this directory.
 Pitfalls:
 
 The current version of makefile does not have dependency on .h files. As a result modifying .h files will not result in compilation. If header files are modifie, make sure that all files which import the said header file are re-compiled.
+
+-----------------------------------------------------------------------------------------------------
+
+Features file
+
+This is a csv file which has all the features.
+The format is as follows:
+router id, cycle, for directions one by one[for vc's one by one[buffer capacity, buffer status, cycles since last flit]]
+More details regading the format can be found in FeatureCollector.h::struct Feature::print()
