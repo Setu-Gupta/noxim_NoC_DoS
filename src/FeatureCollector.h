@@ -19,7 +19,7 @@ typedef struct port_feature
 	{
 		buffer_capacity.resize(GlobalParams::n_virtual_channels, -1);
 		buffer_status.resize(GlobalParams::n_virtual_channels, -1);
-		cycles_since_last_flit.resize(GlobalParams::n_virtual_channels, -1);
+		cycles_since_last_flit.resize(GlobalParams::n_virtual_channels, INT_MAX);
 	}
 
 	vector <int> buffer_capacity;	// Maximum size for the buffer
@@ -30,7 +30,7 @@ typedef struct port_feature
 	{
 		string op = "";
 		for(int i = 0; i < GlobalParams::n_virtual_channels; i++)
-			op += to_string(buffer_capacity[i]) + ", " + to_string(buffer_status[i]) + ", " + to_string(cycles_since_last_flit[i]) + ", ";
+			op += to_string(buffer_capacity[i]) + ", " + to_string(buffer_status[i]) + ", " + to_string(cycles_since_last_flit[i]);
 		return op;
 	}
 } port_feature_t;
@@ -52,8 +52,6 @@ typedef struct Feature
 		info += to_string(local_id) + ", " +to_string(cycle);
 		for(int i = 0; i < TOTAL_DIRECTIONS; i++)
 			info += ", " + data[i].print();
-		int last_comma_idx = info.rfind(",");
-		info = info.substr(0, last_comma_idx);	// Remove the last comma
 		return info + "\n";
 	} 
 

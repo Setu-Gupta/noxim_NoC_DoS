@@ -236,7 +236,7 @@ Reports for various test cases are stored in this directory.
 
 Pitfalls:
 
-The current version of makefile does not have dependency on .h files. As a result modifying .h files will not result in compilation. If header files are modifie, make sure that all files which import the said header file are re-compiled.
+The current version of makefile might not be able to handle dependencyies on .h files. As a result modifying .h files may not result in compilation. If header files are modifie, make sure that all files which import the said header file are re-compiled.
 
 -----------------------------------------------------------------------------------------------------
 

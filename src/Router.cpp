@@ -100,7 +100,7 @@ void Router::rxProcess()
 				    if(!is_chosed_direction_hub)
 				    	for(int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
 				    	{
-				    		if(current_features.data[i].cycles_since_last_flit[vc] != -1)
+				    		if(current_features.data[i].cycles_since_last_flit[vc] != INT_MAX)
 				    			current_features.data[i].cycles_since_last_flit[vc]++;
 				    	}
 				}
@@ -112,7 +112,7 @@ void Router::rxProcess()
 		    	if(!is_chosed_direction_hub)
 			    	for(int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
 			    	{
-			    		if(current_features.data[i].cycles_since_last_flit[vc] != -1)
+			    		if(current_features.data[i].cycles_since_last_flit[vc] != INT_MAX)
 			    			current_features.data[i].cycles_since_last_flit[vc]++;
 			    	}
 		    }

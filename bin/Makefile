@@ -16,6 +16,9 @@ OBJDIR  := ./build
 SRCS := $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(addsuffix *.cpp,$(SUBDIRS)))
 OBJS := $(subst $(SRCDIR),$(OBJDIR),$(SRCS:.cpp=.o))
 
+# Generate dependency files
+DEPS := $(OBJS:%.o=%.d)
+
 MODULE := noxim
 
 
@@ -37,19 +40,23 @@ LIBS := -lsystemc -lm -lyaml-cpp
 SPACE := $(subst ,, )
 VPATH := $(SRCDIR):$(subst $(SPACE),:,$(SUBDIRS))
 
+
+
+
 ##### RULES #####
 
 $(MODULE): $(OBJS)
 	$(CXX) $(LIBDIR) $^ $(LIBS) -o $@ 2>&1 | c++filt
 
+-include Makefile.deps $(DEPS)
+
 $(OBJDIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $(INCDIR) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCDIR) -MMD -c $< -o $@
 
 clean:
-	rm -f $(OBJS) $(MODULE) *~
+	rm -f $(OBJS) $(MODULE) $(DEPS) *~
 
 depend: 
 	makedepend $(SRCS) -Y -f- 2>/dev/null | sed 's_$(SRCDIR)_$(OBJDIR)_' > Makefile.deps
 
--include Makefile.deps
