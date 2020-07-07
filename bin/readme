@@ -86,6 +86,7 @@ DataStructs.h
 	Payload now has type and data. Refer to GloablParams.h for valid types.
 	Modified == operator for Payload
 	Added Payload to Flit
+	Added rx_cycle to Flit
 	Added payload to Packet
 	Modified constructor and make() for struct Packet to include Payload
 
@@ -243,6 +244,4 @@ The current version of makefile might not be able to handle dependencyies on .h 
 Features file
 
 This is a csv file which has all the features.
-The format is as follows:
-router id, cycle, for directions one by one[for vc's one by one[buffer capacity, buffer status, cycles since last flit]]
-More details regading the format can be found in FeatureCollector.h::struct Feature::print()
+Details regading the format can be found in FeatureCollector.h::struct Feature::print()

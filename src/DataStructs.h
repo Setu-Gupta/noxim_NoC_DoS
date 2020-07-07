@@ -131,6 +131,8 @@ struct Flit {
 
     int hub_relay_node;
 
+    int rx_cycle = -1;   // Cycle at which flit was received by router. It's used to find the Rx to Tx latency for the flit
+
     inline bool operator ==(const Flit & flit) const {
 	return (flit.src_id == src_id && flit.dst_id == dst_id
 		&& flit.flit_type == flit_type
