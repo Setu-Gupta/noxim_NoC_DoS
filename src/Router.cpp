@@ -253,9 +253,9 @@ void Router::txProcess()
 						req_tx[o].write(current_level_tx[o]);
 						buffer[i][vc].Pop();
 
-						current_features.data[i].transmitted_flits[vc]++;	// Increase the cont of transmitted flits.
+						current_features.data[o].transmitted_flits[vc]++;	// Increase the cont of transmitted flits.
 						int cur_cycle = sc_time_stamp().to_double() / GlobalParams::clock_period_ps; // Get current cyle
-						current_features.data[i].cummalative_latency[vc] += (cur_cycle - flit.rx_cycle);
+						current_features.data[o].cummalative_latency[vc] += (cur_cycle - flit.rx_cycle);
 
 						if (flit.flit_type == FLIT_TYPE_TAIL)
 						{
@@ -300,7 +300,7 @@ void Router::txProcess()
 						//LOG << " **DEBUG APB: current_level_tx: " << current_level_tx[o] << " ack_tx: " << ack_tx[o].read() << endl;
 						LOG << " **DEBUG buffer_full_status_tx " << buffer_full_status_tx[o].read().mask[vc] << endl;
 
-						current_features.data[i].stalled_flits[vc]++; // Update stalled flit count
+						current_features.data[o].stalled_flits[vc]++; // Update stalled flit count
 
 						//LOG<<"END_NO_cl_tx="<<current_level_tx[o]<<"_req_tx="<<req_tx[o].read()<<" _ack= "<<ack_tx[o].read()<< endl;
 						/*

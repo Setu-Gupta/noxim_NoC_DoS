@@ -9,6 +9,8 @@
 
 using namespace std;
 
+#define CYCLES_SINCE_LAST_FLIT_INITIAL 1000 // currently set as reset cycles
+
 /*
 port_feature_t contains data for an particualar port of a particular router at a particular cycle.
 Different VCs can be accessed by different indexes of vector. 
@@ -21,7 +23,7 @@ typedef struct port_feature
 		// Rx statistics
 		buffer_capacity.resize(GlobalParams::n_virtual_channels, -1);
 		buffer_status.resize(GlobalParams::n_virtual_channels, -1);
-		cycles_since_last_flit.resize(GlobalParams::n_virtual_channels, INT_MAX);
+		cycles_since_last_flit.resize(GlobalParams::n_virtual_channels, CYCLES_SINCE_LAST_FLIT_INITIAL);
 		
 		// Tx statistics
 		stalled_flits.resize(GlobalParams::n_virtual_channels, -1);

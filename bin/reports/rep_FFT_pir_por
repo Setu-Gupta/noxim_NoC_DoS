@@ -14,4 +14,4 @@ Reset Cycles: 1000
 XY routing
 
 Networks starts to saturate around pir=por=0.0001
-Anomaly for pir=por=0.0001: Maybe some long distance packets are being dropped due to congestion. Hence packets with large delays are reduced. As a result Delay values drop significantly.
+Anomaly for pir=por=0.001: Maybe some long distance packets are being dropped due to congestion. Hence packets with large delays are reduced. As a result Delay values drop significantly.

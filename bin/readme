@@ -42,7 +42,7 @@ to_test		: files on root		: This is a model set of files for various scenarios. 
 		  FFT_pir_por		: This directory has all the previous files but with por = pir.
 		  FFT_pir_por/with_attack	: Same as before
 full_communication	: This contains files and corresponding logs for tables representing full communication (Explained below).
-
+perceptron_data	:Datasets used to train perceptron
 
 -----------------------------------------------------------------------------------------------------
 
@@ -73,6 +73,15 @@ run_noxim.sh			: Location 	-> (installation root)/tools/.
 		  		  Function	-> Tool to run noxim on various files as specified in path (in the .sh file)
 				  Usage		-> Execute directly on any bash compatible shell
 				  Notes		-> If the file doesn't have execute permissions, first do "chmod +x path/to/.sh/file"
+
+perceptron.sh			: Location 	-> (installation root)/tools/.
+		  		  Dependencies	-> python3
+		  		  Function	-> Tool train and test perceptron to predict whether data a port is congested
+		  		  How to run	-> On shell enter the following command
+				  			"python3 path/to/field_modifier.py path/to/feature/file".
+				  Notes		-> The script generates a file in the same directory from which it was ran called "training_report".
+				  		   This is a csv file which has weights and baises for various router and ports.
+						   The details and format can be found in the script itself.
 
 -----------------------------------------------------------------------------------------------------
 
