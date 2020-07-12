@@ -224,8 +224,8 @@ def pre_process(router_info):
 	# Example:
 	# 	Suppose we have [1, 2, 3, 4, 5, 6] and window size is 3, 
 	# 	then the following windows are constructed:
-	# 	[0, 0, 1] : avg is 1-0/3 = 1/3
-	# 	[0, 1, 3] : avg is 3-0/3 =  1 (Notice instread of 2, we inserted 2 + window[-1])
+	# 	[0, 0, 1] : avg is 1-0/1 = 1
+	# 	[0, 1, 3] : avg is 3-0/2 =  3/2 (Notice instread of 2, we inserted 2 + window[-1])
 	# 	[1, 3, 5] : avg is 5-1/3 = 4/3 (Notice instread of 3, we inserted 3 + window[-1])
 	# This makes the time complexity independent of AVG_CYCLES
 
@@ -240,12 +240,15 @@ def pre_process(router_info):
 			PARSED_BUFFER_WAITING_TIME		: [0] * AVG_CYCLES
 		}
 
+		current_number_of_elements_in_window = 0
 		for entry_idx in range(len(router_info[router_port])): # Iterate over sample points
 			for feature in windows: # Iterate over every feature
 				windows[feature].pop(0)	# remoove the first element 
 				value_to_insert = windows[feature][-1] + router_info[router_port][entry_idx][feature] # Calculate the value to be added
 				windows[feature].append(value_to_insert)	# Insert the value
-				avg = (windows[feature][-1] - windows[feature][0]) / AVG_CYCLES	# Calculate average
+				current_number_of_elements_in_window += 1
+				current_number_of_elements_in_window = min(current_number_of_elements_in_window, AVG_CYCLES) # This ensures that when taling average, we divide by the correct no. of elements
+				avg = (windows[feature][-1] - windows[feature][0]) / current_number_of_elements_in_window	# Calculate average
 
 				router_info[router_port][entry_idx][feature] = avg	# Update to average value
 	
@@ -395,7 +398,7 @@ def predict(bias, weights, vector):
 
 
 # Learning parameters
-EPOCHS = 1000
+EPOCHS = 300
 LEARNING_RATE = 0.0001
 """
 Learns the weights for percepton
@@ -631,15 +634,55 @@ def generate_path(router_1, router_2):
 
 
 
+"""
+Merges two data sets of tyoe router_info
+Args:
+	set_1, set_2	: Datasets to be merged
+Rets:
+	merged	: Merged dataset
+"""
+def merge_info(set_1, set_2):
+	print("Merging....")
+	merged = {}
+	for router_port in set_1:
+		merged[router_port] = cp(set_1[router_port])	# Add enteries from set 1
+		merged[router_port].extend(cp(set_2[router_port]))	# Add enteries from set 2
+
+	print("Done!")
+	return merged
+
+
 def main():
-	router_1, router_2, start_cycle = get_annotation_data()
-	path = generate_path(router_1, router_2)
-	router_info = parse_features(sys.argv[1], path)
-	router_info = pre_process(router_info)
-	# router_info = normalize_data(router_info)
-	router_info = annotate_data(router_info, start_cycle)
-	accuracy = run_experiment(router_info)
-	print("Total accuracy is:", str(accuracy) + "%")
+	if(len(sys.argv) == 3):	# If two files are provided as arguments, use the first one as unsaturated and other as saturated
+		print("Using", sys.argv[1], "as unsaturated and", sys.argv[2], "as saturated")
+		router_1 = list(map(int, (input("Enter 1st router: ")).split()))
+		router_2 = list(map(int, (input("Enter 2nd router: ")).split()))
+		path = generate_path(router_1, router_2)
+
+		# Generate data for unsaturated case
+		router_info_unsaturated = parse_features(sys.argv[1], path)
+		router_info_unsaturated = pre_process(router_info_unsaturated)
+		router_info_unsaturated = annotate_data(router_info_unsaturated, 1e5)	# Since the start cycle is 1e5, all enteries are annotated as unsaturated
+
+		# Generate data for saturated case
+		router_info_saturated = parse_features(sys.argv[2], path)
+		router_info_saturated = pre_process(router_info_saturated)
+		router_info_saturated = annotate_data(router_info_saturated, -1)	# Since the start cycle is -1, all enteries are annotated as saturated
+
+		# Merge datasets and run experiment
+		router_info = merge_info(router_info_unsaturated, router_info_saturated)
+		accuracy = run_experiment(router_info)
+		print("total accuracy is:", str(accuracy) + "%")
+
+	else:
+		router_1, router_2, start_cycle = get_annotation_data()
+		path = generate_path(router_1, router_2)
+		router_info = parse_features(sys.argv[1], path)
+		router_info = pre_process(router_info)
+		# router_info = normalize_data(router_info)
+		router_info = annotate_data(router_info, start_cycle)
+		accuracy = run_experiment(router_info)
+		print("total accuracy is:", str(accuracy) + "%")
 
 
 
