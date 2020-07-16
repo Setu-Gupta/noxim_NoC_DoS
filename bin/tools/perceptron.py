@@ -11,6 +11,7 @@ The tool can be used via the following command
 import sys						# Used to read sys args
 from copy import deepcopy as cp	# Used to copy arrays
 from random import shuffle 		# Used to mix data around
+import os						# Used to remove training_report file
 
 # Definitions for directions
 DIRECTIONS 		= 5
@@ -393,12 +394,13 @@ def predict(bias, weights, vector):
 	assert(len(vector) == len(weights))
 	for idx in range(len(weights)):	# Take inner product
 		activation += weights[idx] * vector[idx]
+
 	return 1.0 if activation >= 0.0 else 0.0
 
 
 
 # Learning parameters
-EPOCHS = 300
+EPOCHS = 2500
 LEARNING_RATE = 0.0001
 """
 Learns the weights for percepton
@@ -413,15 +415,17 @@ def train_weights(train):
 	weights = [0] * PARSED_FEATURE_COUNT
 	for epoch in range(EPOCHS):	# Iterate over all epochs
 		print("Running epoch:", epoch + 1, "out of", EPOCHS, end = "")
+		shuffle(train)	# Shuffle dataset on each pass
 		sq_error = 0.0
 		for data_point in train:
 			data_features = data_point[1:-1]	# Ignore the annotation and cycle count
 			prediction = predict(bias, weights, data_features) # Predict based on current weights and bias
-			error = data_features[-1] - prediction	# Get error
+			error = data_point[-1] - prediction	# Get error
 			sq_error += error ** 2	# Update squared error
 			bias += LEARNING_RATE * error # Update bias
 			for w_idx in range(len(weights)):	# Update weights
 				weights[w_idx] += LEARNING_RATE * error * data_features[w_idx]
+			# print(bias, weights)
 		print(" Error:", sq_error, '\t\t\t\t\t', end = "\r")
 	print()
 	return bias, weights
@@ -449,7 +453,7 @@ def test_weights(test, weights, bias):
 		total += 1
 		data_features = data_point[1:-1] # Ignore the annotation and cycle count
 		prediction = predict(bias, weights, data_features) # Predict based on current weights and bias
-		if(abs(prediction - data_features[-1]) < FLOAT_COMPARE_ZERO):
+		if(abs(prediction - data_point[-1]) < FLOAT_COMPARE_ZERO):
 			correct += 1
 
 	# Calculate accuracy and return it
@@ -517,6 +521,9 @@ def run_experiment(router_info):
 	
 	# Variables to track progress
 	total_runs_to_be_done = len(router_info)
+	
+	if(os.path.exists(TRAINING_REPORT)):
+		os.remove(TRAINING_REPORT)	# Remove training report if it already exists
 
 	# Train and test
 	for router_port in router_info: # Run training and testing for each router and port
@@ -653,8 +660,13 @@ def merge_info(set_1, set_2):
 
 
 def main():
-	if(len(sys.argv) == 3):	# If two files are provided as arguments, use the first one as unsaturated and other as saturated
+	if(len(sys.argv) == 4):	# If two files are provided as arguments, use the first one as unsaturated and other as saturated
 		print("Using", sys.argv[1], "as unsaturated and", sys.argv[2], "as saturated")
+
+		global TRAINING_REPORT
+		TRAINING_REPORT = sys.argv[3]	# Set the training report file name
+		print("exporting to " + TRAINING_REPORT)
+
 		router_1 = list(map(int, (input("Enter 1st router: ")).split()))
 		router_2 = list(map(int, (input("Enter 2nd router: ")).split()))
 		path = generate_path(router_1, router_2)
@@ -662,11 +674,13 @@ def main():
 		# Generate data for unsaturated case
 		router_info_unsaturated = parse_features(sys.argv[1], path)
 		router_info_unsaturated = pre_process(router_info_unsaturated)
+		# router_info_unsaturated = normalize_data(router_info_unsaturated)
 		router_info_unsaturated = annotate_data(router_info_unsaturated, 1e5)	# Since the start cycle is 1e5, all enteries are annotated as unsaturated
 
 		# Generate data for saturated case
 		router_info_saturated = parse_features(sys.argv[2], path)
 		router_info_saturated = pre_process(router_info_saturated)
+		# router_info_saturated = normalize_data(router_info_saturated)
 		router_info_saturated = annotate_data(router_info_saturated, -1)	# Since the start cycle is -1, all enteries are annotated as saturated
 
 		# Merge datasets and run experiment

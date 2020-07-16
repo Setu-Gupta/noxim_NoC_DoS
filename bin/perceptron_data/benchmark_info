@@ -1,0 +1,7 @@
+1.)	Variable moving average:
+	The following sets of benchmarks have transpose traffic between node 0 and 63.
+	Each set has 5 benchmarks:	FFT, Radix, Barnes, Single Pair, Merged
+	FFT, Radix and Barnes are followed by the pir and por values used to generatre the traffic tables
+	Merged has the data of the above three appended together
+	Single Pair is synthetic traffic created by hand. Reffer to it's traffic table for more info.
+	There are 5 sets with moving average of 0, 5, 10, 50 and 100
