@@ -26,9 +26,22 @@ void ProcessingElement::rxProcess()
     } else {
 	if (req_rx.read() == 1 - current_level_rx) {
 	    Flit flit_tmp = flit_rx.read();
-	    receive(flit_tmp);
-	    current_level_rx = 1 - current_level_rx;	// Negate the old value for Alternating Bit Protocol (ABP)
+	    // receive(flit_tmp);
+	    int vc = flit_tmp.vc_id;
+	    if(!buffer_rx[vc].IsFull())
+	   	{	
+	   		buffer_rx[vc].Push(flit_tmp);
+	   		LOG << "Received flit " << flit_tmp << endl;
+	   		current_level_rx = 1 - current_level_rx;	// Negate the old value for Alternating Bit Protocol (ABP)
+	   	}
 	}
+	receive();
+
+	// Update buffer status
+	TBufferFullStatus bfs;
+	for (int vc=0;vc<GlobalParams::n_virtual_channels;vc++)
+		bfs.mask[vc] = buffer_rx[vc].IsFull();
+	buffer_full_status_rx.write(bfs);
 	ack_rx.write(current_level_rx);
     }
 }
@@ -535,36 +548,43 @@ unsigned int ProcessingElement::getQueueSize() const
     return packet_queue.size();
 }
 
-void ProcessingElement::receive(Flit flit)
+void ProcessingElement::receive()
 {
-	if(flit.flit_type == FLIT_TYPE_TAIL)
+	for(int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
 	{
-		LOG << "Received at " << local_id << " " << flit << " dataAvailable = " << dataAvailable << endl;
-		switch(flit.payload.type)
+		if(!buffer_rx[vc].IsEmpty())
 		{
-			case PAYLOAD_DEFAULT:
-				LOG << "type default\n";
-				handleDefault(flit);
-				break;
-			case PAYLOAD_WRITE_DATA:
-				LOG << "type write\n";
-				handleWrite(flit);
-				break;
-			case PAYLOAD_READ_REQ:
-				LOG << "type read_request\n";
-				handleReadReq(flit);
-				break;
-			case PAYLOAD_READ_ANS:
-				LOG << "type read_reply\n";
-				handleReadReply(flit);
-				break;
-			case PAYLOAD_MALICIOUS:
-				LOG << "UNDER ATTACK!\n";
-				handleAttack(flit);
-				break;
-			default:
-				LOG << "type Not reserved!\n";
-				handleDefault(flit);
+			Flit flit = buffer_rx[vc].Pop();
+			if(flit.flit_type == FLIT_TYPE_TAIL)
+			{
+				LOG << "Received at " << local_id << " " << flit << " dataAvailable = " << dataAvailable << endl;
+				switch(flit.payload.type)
+				{
+					case PAYLOAD_DEFAULT:
+						LOG << "type default\n";
+						handleDefault(flit);
+						break;
+					case PAYLOAD_WRITE_DATA:
+						LOG << "type write\n";
+						handleWrite(flit);
+						break;
+					case PAYLOAD_READ_REQ:
+						LOG << "type read_request\n";
+						handleReadReq(flit);
+						break;
+					case PAYLOAD_READ_ANS:
+						LOG << "type read_reply\n";
+						handleReadReply(flit);
+						break;
+					case PAYLOAD_MALICIOUS:
+						LOG << "UNDER ATTACK!\n";
+						handleAttack(flit);
+						break;
+					default:
+						LOG << "type Not reserved!\n";
+						handleDefault(flit);
+				}
+			}
 		}
 	}
 }
@@ -638,4 +658,20 @@ void ProcessingElement::handleAttack(Flit flit)
 		attack_pipeline_filled = true;	// Stop inserting more packets as pipeline is filled
 		LOG << "Filled MALICIOUS pipeline!" << endl;
 	}
+}
+
+int ProcessingElement::get_stalled_flits(int vc)
+{
+	return sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+}
+
+int ProcessingElement::get_transmitted_flits(int vc)
+{
+	return 0;
+}
+
+
+int ProcessingElement::get_cumulative_latency(int vc)
+{
+	return 0;
 }

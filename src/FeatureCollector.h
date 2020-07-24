@@ -28,7 +28,7 @@ typedef struct port_feature
 		// Tx statistics
 		stalled_flits.resize(GlobalParams::n_virtual_channels, -1);
 		transmitted_flits.resize(GlobalParams::n_virtual_channels, -1);
-		cummalative_latency.resize(GlobalParams::n_virtual_channels, -1);
+		cumulative_latency.resize(GlobalParams::n_virtual_channels, -1);
 	}
 
 	/*
@@ -38,11 +38,11 @@ typedef struct port_feature
 	{
 		stalled_flits.clear();
 		transmitted_flits.clear();
-		cummalative_latency.clear();
+		cumulative_latency.clear();
 
 		stalled_flits.resize(GlobalParams::n_virtual_channels, 0);
 		transmitted_flits.resize(GlobalParams::n_virtual_channels, 0);
-		cummalative_latency.resize(GlobalParams::n_virtual_channels, 0);
+		cumulative_latency.resize(GlobalParams::n_virtual_channels, 0);
 	}
 
 	// Rx statistics
@@ -53,7 +53,7 @@ typedef struct port_feature
 	// Tx statistics
 	vector <int> stalled_flits; // Contains the number of rejected flits due to filled buffers
 	vector <int> transmitted_flits; // Contains the number of flits transmitted at this cycle
-	vector <int> cummalative_latency; // Contains the sum of latency of all the flits which were transmitted this cycle
+	vector <int> cumulative_latency; // Contains the sum of latency of all the flits which were transmitted this cycle
 
 	string print()
 	{
@@ -65,7 +65,7 @@ typedef struct port_feature
 			op += to_string(cycles_since_last_flit[i]) + ", ";
 			op += to_string(stalled_flits[i]) + ", ";
 			op += to_string(transmitted_flits[i]) + ", ";
-			op += to_string(cummalative_latency[i]);
+			op += to_string(cumulative_latency[i]);
 		}
 		return op;
 	}

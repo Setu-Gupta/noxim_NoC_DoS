@@ -61,7 +61,7 @@ void Router::rxProcess()
 			// 2) there is a free slot in the input buffer of direction i
 			//LOG<<"****RX****DIRECTION ="<<i<<  endl;
 
-			bool is_chosed_direction_hub = i == DIRECTIONS + 1; // We need this flag later to prevent inserting data for hub
+			bool is_chosen_direction_hub = i == DIRECTIONS + 1; // We need this flag later to prevent inserting data for hub
 			if (req_rx[i].read() == 1 - current_level_rx[i])
 			{ 
 				Flit received_flit = flit_rx[i].read();
@@ -90,7 +90,7 @@ void Router::rxProcess()
 						power.networkInterface();
 
 					// Update cycles_since_last_flit in current features
-					if(!is_chosed_direction_hub)
+					if(!is_chosen_direction_hub)
 						current_features.data[i].cycles_since_last_flit[vc] = 0;
 				}
 				else  // buffer full
@@ -101,7 +101,7 @@ void Router::rxProcess()
 					assert(i== DIRECTION_LOCAL);
 
 					// No flit received
-					if(!is_chosed_direction_hub)
+					if(!is_chosen_direction_hub)
 						for(int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
 						{
 							if(current_features.data[i].cycles_since_last_flit[vc] != INT_MAX)
@@ -113,7 +113,7 @@ void Router::rxProcess()
 			else
 			{
 				// No flit received
-				if(!is_chosed_direction_hub)
+				if(!is_chosen_direction_hub)
 					for(int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
 					{
 						if(current_features.data[i].cycles_since_last_flit[vc] != INT_MAX)
@@ -124,7 +124,7 @@ void Router::rxProcess()
 			// updates the mask of VCs to prevent incoming data on full buffers
 			TBufferFullStatus bfs;
 			for (int vc=0;vc<GlobalParams::n_virtual_channels;vc++)
-			bfs.mask[vc] = buffer[i][vc].IsFull();
+				bfs.mask[vc] = buffer[i][vc].IsFull();
 			buffer_full_status_rx[i].write(bfs);
 		}
 	}
@@ -253,9 +253,9 @@ void Router::txProcess()
 						req_tx[o].write(current_level_tx[o]);
 						buffer[i][vc].Pop();
 
-						current_features.data[o].transmitted_flits[vc]++;	// Increase the cont of transmitted flits.
+						current_features.data[o].transmitted_flits[vc]++;	// Increase the count of transmitted flits.
 						int cur_cycle = sc_time_stamp().to_double() / GlobalParams::clock_period_ps; // Get current cyle
-						current_features.data[o].cummalative_latency[vc] += (cur_cycle - flit.rx_cycle);
+						current_features.data[o].cumulative_latency[vc] += (cur_cycle - flit.rx_cycle);
 
 						if (flit.flit_type == FLIT_TYPE_TAIL)
 						{
@@ -329,6 +329,15 @@ void Router::write_features()
 		for(int i = 0; i < TOTAL_DIRECTIONS; i++ )  // Iterate over all ports i.e NSEW + local and upadet buffer status
 			for(int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
 				current_features.data[i].buffer_status[vc] = buffer[i][vc].getCurrentFreeSlots();
+
+
+		// Update Tx data for local port
+		for(int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
+		{
+			current_features.data[DIRECTION_LOCAL].stalled_flits[vc] = pe->get_stalled_flits(vc);
+			current_features.data[DIRECTION_LOCAL].transmitted_flits[vc] = pe->get_transmitted_flits(vc);
+			current_features.data[DIRECTION_LOCAL].cumulative_latency[vc] = pe->get_cumulative_latency(vc);
+		}
 
 		// Store the features
 		if(fc->features.find(local_id) == fc->features.end())   // First time insertion

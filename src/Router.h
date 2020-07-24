@@ -26,6 +26,7 @@
 #include "selectionStrategies/Selection_NOP.h"
 #include "selectionStrategies/Selection_BUFFER_LEVEL.h"
 #include "FeatureCollector.h"
+#include "ProcessingElement.h"
 
 using namespace std;
 
@@ -147,6 +148,7 @@ SC_MODULE(Router)
 
     bool connectedHubs(int src_hub, int dst_hub);
 
+    ProcessingElement *pe;  // Reference to processing element
     Feature_t current_features; // Current set of features
     bool features_set_up = false;  // Flag is true if features have been initialized
     void write_features(); // Writes feature data

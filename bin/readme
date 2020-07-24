@@ -118,6 +118,7 @@ ProcessingElement.h
 	dataAvailble is a flag initially set to false. After a write, it is flipped to true.
 	data is a integer to store the data in PE. It is initially set to -1. It is updated every time a write is made.
 	Added declaration of 6 new functions. Lines [65, 69]. Refer to ProcessingElement.cpp for details.
+	Added support for input buffer.
 
 ProcessingElement.cpp
 	modified rxprocess() line 24 to initialize dataAvailable to false during reset
@@ -146,6 +147,7 @@ ProcessingElement.cpp
 		This method is called when a malicious packet is received by the PE.
 		This generates a continuous cycle between the source of the packet and local PE.
 		Local PE sends a new malicious packet to source and the cycle continues.
+	Added support for input buffer.
 
 Stats.h
 	Modified struct CommHistory to include normal fields i.e. field exclusively for non malicious packets.
@@ -208,11 +210,15 @@ Router.h
 	Added FeatureCollector to Router
 	Added declaration of write_features() method
 	Added declaration for current_features and features_set_up
+	Added declaration of processing element to extract it's features.
 
 Router.cpp
 	Added code to update FeatureCollector in rxProcess()
 	Added definition for write_features()
 	Added code in rxProcess() in reset as well as normal part to initialize and update features respectively.
+
+Tile.h
+	Added code to assign processing element's reference to router
 
 -----------------------------------------------------------------------------------------------------
 

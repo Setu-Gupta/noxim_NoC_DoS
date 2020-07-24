@@ -102,6 +102,7 @@ SC_MODULE(Tile)
 	    r->NoP_data_out[i] (NoP_data_out[i]);
 	    r->NoP_data_in[i] (NoP_data_in[i]);
 	}
+	r->pe = pe;
 	
 	// local
 	r->flit_rx[DIRECTION_LOCAL] (flit_tx_local);

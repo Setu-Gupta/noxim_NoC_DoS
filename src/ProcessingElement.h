@@ -16,6 +16,7 @@
 
 #include "DataStructs.h"
 #include "GlobalTrafficTable.h"
+#include "Buffer.h"
 #include "Utils.h"
 
 using namespace std;
@@ -38,6 +39,8 @@ SC_MODULE(ProcessingElement)
     sc_in < TBufferFullStatus > buffer_full_status_tx;
 
     sc_in < int >free_slots_neighbor;
+
+    BufferBank buffer_rx;   // Input buffer
 
     // Registers
     int local_id;		// Unique identification number
@@ -67,7 +70,7 @@ SC_MODULE(ProcessingElement)
     Packet trafficButterfly();	// Butterfly destination distribution
     Packet trafficLocal();	// Random with locality
     Packet trafficULocal();	// Random with locality
-    void receive(Flit flit);		// Recives flits and updates dataAvailable by return value
+    void receive();		// Consumes flits and updates dataAvailable by return value
     void handleWrite(Flit flit);
     void handleReadReq(Flit flit);
     void handleReadReply(Flit flit);
@@ -88,6 +91,11 @@ SC_MODULE(ProcessingElement)
     int roulett();
     int findRandomDestination(int local_id,int hops);
     unsigned int getQueueSize() const;
+
+    // Functions to extract features
+    int get_stalled_flits(int vc);
+    int get_transmitted_flits(int vc);
+    int get_cumulative_latency(int vc);
 
     // Constructor
     SC_CTOR(ProcessingElement) {
