@@ -100,8 +100,18 @@ DataStructs.h
 	Added payload to Packet
 	Modified constructor and make() for struct Packet to include Payload
 
+ConfigurationManager.cpp
+	Added code to extract feature file name from args
+	Added code to extract weights file name from args
+
 GlobalParams.h
 	Added #define for Payload types. Lines [93, 97]
+	Added definitions of variables to store the features file name
+	Added definitions of variables to store the weights file name
+
+GlobalParams.cpp
+	Added definitions of variables to store the features file name
+	Added definitions of variables to store the weights file name
 
 GlobalTrafficTable.h
 	Added Payload field to struct Communication

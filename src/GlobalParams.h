@@ -97,6 +97,10 @@ using namespace std;
 #define PAYLOAD_READ_ANS	3
 #define PAYLOAD_MALICIOUS	4
 
+// Deafult values for feature and weight file
+#define NO_FEATURES         "NO_FEATURES_EXTRACTION"
+#define NO_LOCALIZATION     "NO_LOCALIZATION"
+
 typedef struct {
     pair<double, double> ber;
     int dataRate;
@@ -192,6 +196,8 @@ struct GlobalParams {
     // out of yaml configuration
     static bool ascii_monitor;
     static int channel_selection;
+    static string weights_file_name;
+    static string feature_file_name;
 };
 
 #endif

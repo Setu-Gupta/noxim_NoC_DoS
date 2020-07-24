@@ -601,7 +601,7 @@ void parseCmdLine(int arg_num, char *arg_vet[])
 		GlobalParams::simulation_time = atoi(arg_vet[++i]);
 	    else if (!strcmp(arg_vet[i], "-asciimonitor")) 
 		GlobalParams::ascii_monitor = true;
-	    else if (!strcmp(arg_vet[i], "-config") || !strcmp(arg_vet[i], "-power"))
+	    else if (!strcmp(arg_vet[i], "-config") || !strcmp(arg_vet[i], "-power") || !strcmp(arg_vet[i], "-features") || !strcmp(arg_vet[i], "-weights"))
 		// -config is managed from configure function
 		// i++ skips the configuration file name 
 		i++;
@@ -664,6 +664,22 @@ void configure(int arg_num, char *arg_vet[]) {
         {
             cerr << "No YAML power configurations file found!\n Use -power to load examples from config_examples folder" << endl;
             exit(0);
+        }
+    }
+
+    GlobalParams::feature_file_name = NO_FEATURES;
+    for (int i = 1; i < arg_num; i++) {
+        if (!strcmp(arg_vet[i], "-features")) {
+            GlobalParams::feature_file_name = arg_vet[++i];
+            break;
+        }
+    }
+
+    GlobalParams::weights_file_name = NO_LOCALIZATION;
+    for (int i = 1; i < arg_num; i++) {
+        if (!strcmp(arg_vet[i], "-weights")) {
+            GlobalParams::weights_file_name = arg_vet[++i];
+            break;
         }
     }
 

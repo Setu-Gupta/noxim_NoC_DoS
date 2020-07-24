@@ -15,16 +15,19 @@ void FeatureCollector::testPrint()
 
 void FeatureCollector::exportFeatures()
 {
-	ofstream feature_file;
-	feature_file.open("features", ios::out | ios::trunc);	// Open a file to write data to
-
-	map < int, vector < Feature_t > > :: iterator it = features.begin();
-	for(it = features.begin(); it != features.end(); it++)
+	if(GlobalParams::feature_file_name != NO_FEATURES)
 	{
-		vector < Feature_t > f_vect = it->second;
-		for(Feature_t f: f_vect)
-			feature_file << f.print();
-	}
+		ofstream feature_file;
+		feature_file.open(GlobalParams::feature_file_name, ios::out | ios::trunc);	// Open a file to write data to
 
-	feature_file.close();
+		map < int, vector < Feature_t > > :: iterator it = features.begin();
+		for(it = features.begin(); it != features.end(); it++)
+		{
+			vector < Feature_t > f_vect = it->second;
+			for(Feature_t f: f_vect)
+				feature_file << f.print();
+		}
+
+		feature_file.close();
+	}
 }
