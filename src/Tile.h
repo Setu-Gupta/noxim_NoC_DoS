@@ -102,7 +102,6 @@ SC_MODULE(Tile)
 	    r->NoP_data_out[i] (NoP_data_out[i]);
 	    r->NoP_data_in[i] (NoP_data_in[i]);
 	}
-	r->pe = pe;
 	
 	// local
 	r->flit_rx[DIRECTION_LOCAL] (flit_tx_local);
@@ -149,6 +148,7 @@ SC_MODULE(Tile)
 	r->free_slots[DIRECTION_LOCAL] (free_slots_local);
 	r->free_slots_neighbor[DIRECTION_LOCAL] (free_slots_neighbor_local);
 	pe->free_slots_neighbor(free_slots_neighbor_local);
+	r->pe = pe;
 
     }
 

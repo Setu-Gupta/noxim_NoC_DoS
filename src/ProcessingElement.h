@@ -16,6 +16,7 @@
 
 #include "DataStructs.h"
 #include "GlobalTrafficTable.h"
+#include "FeatureCollector.h"
 #include "Buffer.h"
 #include "Utils.h"
 
@@ -76,6 +77,7 @@ SC_MODULE(ProcessingElement)
     void handleReadReply(Flit flit);
     void handleDefault(Flit flit);
     void handleAttack(Flit flit);
+    int getNextVC();    // Returns the VC of next flit to transmit
 
     GlobalTrafficTable *traffic_table;	// Reference to the Global traffic Table
     bool never_transmit;	// true if the PE does not transmit any packet 
@@ -93,9 +95,21 @@ SC_MODULE(ProcessingElement)
     unsigned int getQueueSize() const;
 
     // Functions to extract features
+    // Tx features
     int get_stalled_flits(int vc);
     int get_transmitted_flits(int vc);
     int get_cumulative_latency(int vc);
+    
+    // Rx features
+    int get_buffer_status(int vc);
+    int get_cycles_since_last_flit(int vc);
+    bool features_setup = false;
+
+    // Variables to compute features
+    vector <int> cycles_since_last_flit = vector <int> (GlobalParams::n_virtual_channels, 0);
+    vector <int> stalled_flits = vector <int> (GlobalParams::n_virtual_channels, 0);
+    vector <int> transmitted_flits = vector <int> (GlobalParams::n_virtual_channels, 0);
+    vector <int> cumulative_latency = vector <int> (GlobalParams::n_virtual_channels, 0);
 
     // Constructor
     SC_CTOR(ProcessingElement) {

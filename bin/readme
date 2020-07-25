@@ -129,6 +129,9 @@ ProcessingElement.h
 	data is a integer to store the data in PE. It is initially set to -1. It is updated every time a write is made.
 	Added declaration of 6 new functions. Lines [65, 69]. Refer to ProcessingElement.cpp for details.
 	Added support for input buffer.
+	Added declaration for getNextVC() which returns the VC for the next flit to transmit.
+	Added declartions for feature collection variables.
+	Added declarartion for methods to fetch features.
 
 ProcessingElement.cpp
 	modified rxprocess() line 24 to initialize dataAvailable to false during reset
@@ -158,6 +161,9 @@ ProcessingElement.cpp
 		This generates a continuous cycle between the source of the packet and local PE.
 		Local PE sends a new malicious packet to source and the cycle continues.
 	Added support for input buffer.
+	Added definition for getNextVC() which returns the VC for the next flit to transmit.
+	Added definitions for methods to fetch features.
+	Modified rxprocess() and txprocess() to support feature collection.
 
 Stats.h
 	Modified struct CommHistory to include normal fields i.e. field exclusively for non malicious packets.

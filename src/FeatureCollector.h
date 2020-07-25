@@ -5,7 +5,7 @@
 #include <bits/stdc++.h>
 #include <GlobalParams.h>
 
-#define TOTAL_DIRECTIONS	5 // Five directions as {North, East, South, West, Local}
+#define TOTAL_DIRECTIONS	6 // Five directions as {North, East, South, West, Local, PE input}
 
 using namespace std;
 
@@ -88,8 +88,9 @@ typedef struct Feature
 	*/
 	void reset_counts_for_tx()
 	{
-		for(int i = 0; i < TOTAL_DIRECTIONS; i++)
+		for(int i = 0; i < TOTAL_DIRECTIONS - 2; i++)	// NSEW
 			data[i].reset_counts_for_tx();
+		data[TOTAL_DIRECTIONS - 1].reset_counts_for_tx(); // PE's Rx
 	}
 
 
@@ -97,8 +98,9 @@ typedef struct Feature
 	{
 		string info = "";
 		info += to_string(local_id) + ", ";
-		info += to_string(cycle) + ", ";
-		info += to_string(routed_flits);
+		// info += to_string(cycle) + ", ";
+		// info += to_string(routed_flits);
+		info += to_string(cycle);
 		for(int i = 0; i < TOTAL_DIRECTIONS; i++)
 			info += ", " + data[i].print();
 		return info + "\n";

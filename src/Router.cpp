@@ -43,7 +43,7 @@ void Router::rxProcess()
 			current_features.local_id = local_id;   // Reset feature data
 			current_features.cycle = -1;
 
-			for(int i = 0; i < TOTAL_DIRECTIONS; i++ )  // Iterate over all ports i.e NSEW + local
+			for(int i = 0; i < TOTAL_DIRECTIONS; i++ )  // Iterate over all ports i.e NSEW + local + PE Rx
 				for(int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
 					current_features.data[i].buffer_capacity[vc] = buffer[i][vc].GetMaxBufferSize();
 		}
@@ -227,6 +227,8 @@ void Router::txProcess()
 		{ 
 			vector<pair<int,int> > reservations = reservation_table.getReservations(i);
 
+			bool is_chosen_direction_local = i == DIRECTION_LOCAL; // This flag is used later to store features im correct order
+
 			if (reservations.size()!=0)
 			{
 				int rnd_idx = rand()%reservations.size();
@@ -253,9 +255,18 @@ void Router::txProcess()
 						req_tx[o].write(current_level_tx[o]);
 						buffer[i][vc].Pop();
 
-						current_features.data[o].transmitted_flits[vc]++;	// Increase the count of transmitted flits.
 						int cur_cycle = sc_time_stamp().to_double() / GlobalParams::clock_period_ps; // Get current cyle
-						current_features.data[o].cumulative_latency[vc] += (cur_cycle - flit.rx_cycle);
+						if(!is_chosen_direction_local)
+						{
+							current_features.data[o].transmitted_flits[vc]++;	// Increase the count of transmitted flits.
+							current_features.data[o].cumulative_latency[vc] += (cur_cycle - flit.rx_cycle);
+						}
+						else if(is_chosen_direction_local)
+						{
+							current_features.data[o+1].transmitted_flits[vc]++;	// Increase the count of transmitted flits.
+							current_features.data[o+1].cumulative_latency[vc] += (cur_cycle - flit.rx_cycle);
+						}
+
 
 						if (flit.flit_type == FLIT_TYPE_TAIL)
 						{
@@ -300,7 +311,11 @@ void Router::txProcess()
 						//LOG << " **DEBUG APB: current_level_tx: " << current_level_tx[o] << " ack_tx: " << ack_tx[o].read() << endl;
 						LOG << " **DEBUG buffer_full_status_tx " << buffer_full_status_tx[o].read().mask[vc] << endl;
 
-						current_features.data[o].stalled_flits[vc]++; // Update stalled flit count
+						if(!is_chosen_direction_local)
+							current_features.data[o].stalled_flits[vc]++; // Update stalled flit count
+						else if(is_chosen_direction_local)
+							current_features.data[o+1].stalled_flits[vc]++; // Update stalled flit count
+
 
 						//LOG<<"END_NO_cl_tx="<<current_level_tx[o]<<"_req_tx="<<req_tx[o].read()<<" _ack= "<<ack_tx[o].read()<< endl;
 						/*
@@ -326,10 +341,9 @@ void Router::write_features()
 	{
 		current_features.cycle = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;   // Update current cycle
 
-		for(int i = 0; i < TOTAL_DIRECTIONS; i++ )  // Iterate over all ports i.e NSEW + local and upadet buffer status
+		for(int i = 0; i < TOTAL_DIRECTIONS - 1; i++ )  // Iterate over all ports i.e NSEW + local (Not local Rx) and update buffer status
 			for(int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
 				current_features.data[i].buffer_status[vc] = buffer[i][vc].getCurrentFreeSlots();
-
 
 		// Update Tx data for local port
 		for(int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
@@ -337,6 +351,13 @@ void Router::write_features()
 			current_features.data[DIRECTION_LOCAL].stalled_flits[vc] = pe->get_stalled_flits(vc);
 			current_features.data[DIRECTION_LOCAL].transmitted_flits[vc] = pe->get_transmitted_flits(vc);
 			current_features.data[DIRECTION_LOCAL].cumulative_latency[vc] = pe->get_cumulative_latency(vc);
+		}
+
+		// Update Rx data for local port
+		for(int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
+		{
+			current_features.data[DIRECTION_LOCAL+1].buffer_status[vc] = pe->get_buffer_status(vc);
+			current_features.data[DIRECTION_LOCAL+1].cycles_since_last_flit[vc] = pe->get_cycles_since_last_flit(vc);
 		}
 
 		// Store the features

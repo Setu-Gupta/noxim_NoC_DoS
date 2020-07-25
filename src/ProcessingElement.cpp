@@ -23,15 +23,30 @@ void ProcessingElement::rxProcess()
 	current_level_rx = 0;
 	dataAvailable = false;
 	attack_pipeline_filled = false;
+	
+	// Initialize Rx features
+	if(!features_setup)
+	{
+		cycles_since_last_flit.clear();
+		cycles_since_last_flit.resize(GlobalParams::n_virtual_channels, CYCLES_SINCE_LAST_FLIT_INITIAL);
+		features_setup = true;
+	}
     } else {
+	for(int vc = 0; vc < GlobalParams::n_virtual_channels; vc++)
+	   	if(cycles_since_last_flit[vc] != INT_MAX)
+	   		cycles_since_last_flit[vc]++;
+
 	if (req_rx.read() == 1 - current_level_rx) {
 	    Flit flit_tmp = flit_rx.read();
 	    // receive(flit_tmp);
+
+
 	    int vc = flit_tmp.vc_id;
 	    if(!buffer_rx[vc].IsFull())
 	   	{	
 	   		buffer_rx[vc].Push(flit_tmp);
 	   		LOG << "Received flit " << flit_tmp << endl;
+	   		cycles_since_last_flit[vc] = 0;
 	   		current_level_rx = 1 - current_level_rx;	// Negate the old value for Alternating Bit Protocol (ABP)
 	   	}
 	}
@@ -64,16 +79,45 @@ void ProcessingElement::txProcess()
 	} else
 	    transmittedAtPreviousCycle = false;
 
+	// Reset tx params
+	transmitted_flits.clear();
+	transmitted_flits.resize(GlobalParams::n_virtual_channels, 0);
+	stalled_flits.clear();
+	stalled_flits.resize(GlobalParams::n_virtual_channels, 0);
+	cumulative_latency.clear();
+	cumulative_latency.resize(GlobalParams::n_virtual_channels, 0);
 
-	if (ack_tx.read() == current_level_tx) {
-	    if (!packet_queue.empty()) {
-		Flit flit = nextFlit();	// Generate a new flit
-		flit_tx->write(flit);	// Send the generated flit
-		current_level_tx = 1 - current_level_tx;	// Negate the old value for Alternating Bit Protocol (ABP)
-		req_tx.write(current_level_tx);
-	    }
+	int now = sc_time_stamp().to_double() / GlobalParams::clock_period_ps; 
+	if(!packet_queue.empty() && ack_tx.read() == current_level_tx)
+	{
+		int vc = getNextVC();
+		if(!buffer_full_status_tx.read().mask[vc])
+		{
+			Flit flit = nextFlit();	// Generate a new flit
+			flit_tx->write(flit);	// Send the generated flit
+			current_level_tx = 1 - current_level_tx;	// Negate the old value for Alternating Bit Protocol (ABP)
+			req_tx.write(current_level_tx);
+			transmitted_flits[vc]++;
+			cumulative_latency[vc] += (now - flit.timestamp);
+		}
+		else
+			stalled_flits[vc]++;
 	}
+	// if (ack_tx.read() == current_level_tx) {
+	//     if (!packet_queue.empty()) {
+	// 	Flit flit = nextFlit();	// Generate a new flit
+	// 	flit_tx->write(flit);	// Send the generated flit
+	// 	current_level_tx = 1 - current_level_tx;	// Negate the old value for Alternating Bit Protocol (ABP)
+	// 	req_tx.write(current_level_tx);
+	//     }
+	// }
     }
+}
+
+int ProcessingElement::getNextVC()
+{
+	Packet packet = packet_queue.front();
+	return packet.vc_id;
 }
 
 Flit ProcessingElement::nextFlit()
@@ -662,16 +706,25 @@ void ProcessingElement::handleAttack(Flit flit)
 
 int ProcessingElement::get_stalled_flits(int vc)
 {
-	return sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+	return stalled_flits[vc];
 }
 
 int ProcessingElement::get_transmitted_flits(int vc)
 {
-	return 0;
+	return transmitted_flits[vc];
 }
-
 
 int ProcessingElement::get_cumulative_latency(int vc)
 {
-	return 0;
+	return cumulative_latency[vc];
+}
+
+int ProcessingElement::get_buffer_status(int vc)
+{
+	return buffer_rx[vc].getCurrentFreeSlots();
+}
+
+int ProcessingElement::get_cycles_since_last_flit(int vc)
+{
+	return cycles_since_last_flit[vc];
 }
