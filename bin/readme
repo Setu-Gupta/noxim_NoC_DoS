@@ -73,7 +73,7 @@ run_noxim.sh			: Location 	-> (installation root)/tools/.
 				  Usage		-> Execute directly on any bash compatible shell
 				  Notes		-> If the file doesn't have execute permissions, first do "chmod +x path/to/.sh/file"
 
-perceptron.sh			: Location 	-> (installation root)/tools/.
+perceptron.sh (depreciated)	: Location 	-> (installation root)/tools/.
 		  		  Dependencies	-> python3
 		  		  Function	-> Tool train and test perceptron to predict whether data a port is congested
 		  		  How to run	-> On shell enter the following command
@@ -83,7 +83,8 @@ perceptron.sh			: Location 	-> (installation root)/tools/.
 				  Notes		-> The script generates a file in the same directory from which it was ran called "training_report".
 				  		   This is a csv file which has weights and baises for various router and ports.
 						   The details and format can be found in the script itself.
-
+Other perceptron_xxx.py		: Location 	-> (installation root)/tools/.
+				  Notes		-> For other info read the comments in code.
 -----------------------------------------------------------------------------------------------------
 
 Change log
