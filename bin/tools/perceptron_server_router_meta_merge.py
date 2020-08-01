@@ -731,7 +731,7 @@ def predict(bias, weights, vector):
 
 
 # Learning parameters
-EPOCHS = 100
+EPOCHS = 5000
 LEARNING_RATE = 0.00005
 """
 Learns the weights for percepton
