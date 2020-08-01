@@ -4,8 +4,9 @@ Email	: setu18190@iiitd.ac.in
 Date	: 1st Aug 2020
 
 This tool is use to train and test perceptrons on server to detect congestion in ports.
+The prediction is based on router level instead of port level
 The tool can be used via the following command
-	python3 path/to/this/file path/to/benchmark/file number_of_helper_gen_threads_to_use number_of_helper_train_threads_to_use
+	python3 path/to/this/file path/to/benchmark/directory number_of_helper_gen_threads_to_use number_of_helper_threads_to_use_for_other_tasks
 NOTE: This tool searches for noxim executable via the following path: ./../noxim
 """
 import sys						# Used to read arguments
@@ -533,6 +534,185 @@ def worker_gen(ID, jobs, benchmark_name, working_directory, stop):
 
 
 """
+Generates a list of input ports to a router
+Args:
+	router	: The router for which ports are to be generated
+Rets:
+	ports	: A list of router and ports which are input to the given router. The format is
+	[((router_x, router_y), port), ...]
+"""
+def get_input_ports(router):
+	ports = []
+	for port in range(5): # Use the input directions: NSEW + Local
+		ports.append((router, port))
+	return ports
+
+"""
+Generates a list of output ports to a router
+Args:
+	router	: The router for which ports are to be generated
+Rets:
+	ports	: A list of router and ports which are output to the given router. The format is
+	[((router_x, router_y), port), ...]
+"""
+def get_output_ports(router):
+	ports = []
+	
+	# Start adding ports one by one
+	ports.append((router, DIRECTION_PE))	# Add the local PE's input
+
+	# Calculate other directions
+	router_port_north = ((router[0], router[1] - 1), DIRECTION_SOUTH)
+	router_port_south = ((router[0], router[1] + 1), DIRECTION_NORTH)
+	router_port_east = ((router[0] + 1, router[1]), DIRECTION_WEST)
+	router_port_west = ((router[0] - 1, router[1]), DIRECTION_EAST)
+
+	# Add the directions
+	ports.append(router_port_north)
+	ports.append(router_port_south)
+	ports.append(router_port_east)
+	ports.append(router_port_north)
+
+	return ports
+
+"""
+Reads the features of provided ports
+Checks if these ports exist
+If they exist, their features are add to a common pool
+These features are then shuffled
+Args:
+	ports	: The ports whose data is to be merged. The format is
+	[((router_x, router_y), port), ...]
+	working_directory	: The directory in which the code generated files
+Rets:
+	Used port	: A comma seperated string which is a list of ports used. An example is:
+	"1_1.2, 1_1.3"
+	All data	: This is accumaled data from all ports
+"""
+def merge_ports(ports, working_directory):
+	directory_base_name = working_directory + "/per_port_features/" # This is the path to seach individual port files in
+
+	used_ports = "" # Initialize the list of used ports
+
+	all_data = [] # This is the list of 
+
+	# Accumalate data
+	for port in ports: # Iterate over ports
+		file_name = get_router_port_name(port)
+		file_path = directory_base_name + file_name	# Generate the full name to open the file
+		if(os.path.isfile(file_path)):
+			used_ports += file_name + ", "
+			with open(file_path, 'r') as data_file:
+				lines = data_file.readlines()	# Read the data from file
+				for line in lines:
+					data = list(map(float, (line.split(","))))
+					all_data.append(data)	 # Add lines to all data
+
+	# Remove the last comma from used_port string
+	if(len(used_ports) > 2):	# Ensure that string isn't empty
+		used_ports = used_ports[:-2]
+
+	# Shuffle all the data
+	shuffle(all_data)
+
+	return used_ports, all_data
+
+
+
+"""
+Method called by threads to merge features.
+The method does the following:
+1.) Finds list of all ports which are input to current router
+2.) Merges the features of input ports and shuffles it
+3.) Writes to router input features
+4.) Finds list of all ports which are output to current router
+5.) Merges the features of output ports and shuffles it
+6.) Writes to router output features
+Args:
+	ID					: Thread ID
+	jobs				: Queue of jobs to be completed
+	working_directory	: Directory to store generated files
+	stop				: A function which tells thread to stop
+Rets:
+	None
+"""
+def worker_merge(ID, jobs, working_directory, stop):
+	with open(working_directory + "/worker_logs_merge/worker_" + str(ID), "w") as log:	# Open file for log
+		log.write("Thread #" + str(ID) + "\tStarting...\n")
+		print("Thread #" + str(ID) + "\tStarting...")
+		
+		# Compute till all jobs are done
+		while not stop():
+			try:
+				job = jobs.get(timeout = 0.1) # Fetch next job
+				
+				# Log fetching job
+				log.write("Thread #" + str(ID) + "\tStarting job " + str(job) + "\n")
+				print("Thread #" + str(ID) + "\tStarting job " + str(job))
+
+				# Step 1: Get list of input ports
+				log.write("Thread #" + str(ID) + "\tGenerating list of input ports\n")
+				print("Thread #" + str(ID) + "\tGenerating list of input ports")
+				input_ports = get_input_ports(job)
+				#--------------------------------------------------------------------------------------------------------------------------
+
+				# Step 2: Merge input port features
+				log.write("Thread #" + str(ID) + "\tMerging input port features\n")
+				print("Thread #" + str(ID) + "\tMerging input port features")
+				used_ports, merged_inputs = merge_ports(input_ports, working_directory)
+				log.write("Thread #" + str(ID) + "\tUsed ports: " + used_ports + "\n")
+				print("Thread #" + str(ID) + "\tUsed ports: " + used_ports)
+				#--------------------------------------------------------------------------------------------------------------------------
+				
+				# Step 3: Write input features
+				log.write("Thread #" + str(ID) + "\tStoring input port features\n")
+				print("Thread #" + str(ID) + "\tStoring input port features")
+				file_name = get_router_name(job) + "_in"
+				full_path_name = working_directory + "/per_router_features/" + file_name
+				with open(full_path_name, 'w') as input_features_file:
+					for entry in merged_inputs:
+						input_features_file.write(", ".join(map(str, entry)) + "\n")
+				#--------------------------------------------------------------------------------------------------------------------------
+
+				# Step 4: Get list of output ports
+				log.write("Thread #" + str(ID) + "\tGenerating list of output ports\n")
+				print("Thread #" + str(ID) + "\tGenerating list of output ports")
+				output_ports = get_output_ports(job)
+				#--------------------------------------------------------------------------------------------------------------------------
+
+				# Step 5: Merge output port features
+				log.write("Thread #" + str(ID) + "\tMerging output port features\n")
+				print("Thread #" + str(ID) + "\tMerging output port features")
+				used_ports, merged_outputs = merge_ports(output_ports, working_directory)
+				log.write("Thread #" + str(ID) + "\tUsed ports: " + used_ports + "\n")
+				print("Thread #" + str(ID) + "\tUsed ports: " + used_ports)
+				#--------------------------------------------------------------------------------------------------------------------------
+				
+				# Step 6: Write output features
+				log.write("Thread #" + str(ID) + "\tStoring output port features\n")
+				print("Thread #" + str(ID) + "\tStoring output port features")
+				file_name = get_router_name(job) + "_out"
+				full_path_name = working_directory + "/per_router_features/" + file_name
+				with open(full_path_name, 'w') as output_features_file:
+					for entry in merged_outputs:
+						output_features_file.write(", ".join(map(str, entry)) + "\n")
+				#--------------------------------------------------------------------------------------------------------------------------
+				
+				# Log completing the job
+				jobs.task_done()
+				log.write("Thread #" + str(ID) +"\tCompleted job " + str(job) + "\n")
+				print("Thread #" + str(ID) +"\tCompleted job " + str(job))
+				#--------------------------------------------------------------------------------------------------------------------------
+			
+			except queue.Empty:
+				pass
+
+		log.write("Thread #" + str(ID) + "\tExiting...\n")
+		print("Thread #" + str(ID) + "\tExiting...")
+
+
+
+"""
 Tells whether the perceptron was activated or not
 Args:
 	bias	: Bias
@@ -551,7 +731,7 @@ def predict(bias, weights, vector):
 
 
 # Learning parameters
-EPOCHS = 5000
+EPOCHS = 100
 LEARNING_RATE = 0.00005
 """
 Learns the weights for percepton
@@ -630,26 +810,28 @@ def test_weights(test, weights, bias):
 """
 Trains a perceptron according to data and spits out accuracy
 Args:
-	test			: Testing dataset
-	train			: Training dataset
-	router_port		: Router and port for which the training and testing is to be done. The format is ((router_x, router_y), port)
-	log				: File to print log to
-	ID				: ID of the caller thread
+	test		: Testing dataset
+	train		: Training dataset
+	router_dir	: Router  and direction (in/out) for which the training and testing is to be done. The format is "<router_x>_<router_y>_<in/out>"
+	log			: File to print log to
+	ID			: ID of the caller thread
 Rets:
 	accuracy			: A value between 0 and 100 indicating percentage accuracy
 	weights_and_biases	: A list with the following format: [router_x, router_y, port, bias, weights_1, weights_2, ...]
 	False positives	: Percentage of predictions which were false positives
 	False negatives	: Percentage of predictions which were false negatives
 """
-def train_and_test(test, train, router_port, log, ID):
+def train_and_test(test, train, router_dir, log, ID):
 	# Setup data structure to store learnt bias and weights
 	weights_and_biases = []
 
 	# Save router_id and port
-	router_id = router_port[0][1] * DIM_Y + router_port[0][0]
-	port = router_port[1]
+	router_x = int(router_dir.split("_")[0])
+	router_y = int(router_dir.split("_")[1])
+	direction = 1 if router_dir.split("_")[2] == "in" else 0
+	router_id = router_y * DIM_Y + router_x
 	weights_and_biases.append(router_id)
-	weights_and_biases.append(port)
+	weights_and_biases.append(direction)
 
 	# Get learnt bias and weights
 	bias, weights = train_weights(train, log, ID)
@@ -746,24 +928,28 @@ def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock,stop)
 				log.write("Thread #" + str(ID) + "\tStarting job " + job + "\n")
 				print("Thread #" + str(ID) + "\tStarting job " + job)
 
-				# Get the coordinates and port from job name
+				# Get the coordinates and direction from job name
 				router_x = int(job.split("_")[0])
-				router_y = int(job.split("_")[1].split(".")[0])
-				port = int(job.split("_")[1].split(".")[1])
-				router_port = ((router_x, router_y), port)
+				router_y = int(job.split("_")[1])
+				direction = job.split("_")[2]
 
 				# Step 1.1: Read feature file
 				log.write("Thread #" + str(ID) +"\tParsing feature file\n")
 				print("Thread #" + str(ID) +"\tParsing feature file")
 				
 				# Read the features
-				port_info = []
-				job_file_name = working_directory + "/per_port_features/" + job
+				router_info = []
+				job_file_name = working_directory + "/per_router_features/" + job
 				with open(job_file_name, "r") as job_file:
 					lines = job_file.readlines()
 					for line in lines:
 						entry = list(map(float, line.split(",")))
-						port_info.append(entry)
+						router_info.append(entry)
+				if(len(router_info) == 0): # Exit if no features are available
+					jobs.task_done()
+					log.write("Thread #" + str(ID) +"\tCompleted job " + str(job) + "\n")
+					print("Thread #" + str(ID) +"\tCompleted job " + str(job))
+					continue
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Step 1.2: Train and test
@@ -771,8 +957,8 @@ def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock,stop)
 				print("Thread #" + str(ID) +"\tTesting and training")
 
 				accuracy = 0
-				test, train = test_train_splitter(port_info)
-				accuracy, false_positives, false_negatives, weights_and_biases = train_and_test(test, train, router_port, log, ID)
+				test, train = test_train_splitter(router_info)
+				accuracy, false_positives, false_negatives, weights_and_biases = train_and_test(test, train, job, log, ID)
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Step 2.1: Write weights
@@ -815,66 +1001,182 @@ def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock,stop)
 
 
 
+"""
+Method called by threads to meta merge features.
+The method iterates over all benchmark's per_router_features and creates meta merge feature files.
+Args:
+	ID                  : Thread ID
+	jobs                : Queue of jobs to be completed
+	list_of_benchmarks  : List of benchmarks to iterate over
+	working_directory   : Directory to store generated files
+	stop                : A function which tells thread to stop
+Rets:
+	None
+"""
+def worker_meta_merge(ID, jobs, list_of_benchmarks, working_directory, stop ):
+	with open(working_directory + "/worker_logs_meta_merge/worker_" + str(ID), "w") as log: # Open file for log
+		log.write("Thread #" + str(ID) + "\tStarting...\n")
+		print("Thread #" + str(ID) + "\tStarting...")
+		
+		# Compute till all jobs are done
+		while not stop():
+			try:
+				job = jobs.get(timeout = 0.1) # Fetch next job
+
+				# Log fetching job
+				log.write("Thread #" + str(ID) + "\tStarting job " + job + "\n")
+				print("Thread #" + str(ID) + "\tStarting job " + job)
+
+				merged_file_name = working_directory + "/per_router_features/" + job
+				for benchmark in list_of_benchmarks:
+					benchmark_feature_file = working_directory + "/" + benchmark + "/per_router_features/" + job
+					if(os.path.isfile(benchmark_feature_file)):
+						cmd = "cat " + benchmark_feature_file + " >> " + merged_file_name
+						os.system(cmd)
+
+				# Log completing the job
+				jobs.task_done()
+				log.write("Thread #" + str(ID) +"\tCompleted job " + str(job) + "\n")
+				print("Thread #" + str(ID) +"\tCompleted job " + str(job))
+				#--------------------------------------------------------------------------------------------------------------------------
+				
+			except queue.Empty:
+				pass
+
+		log.write("Thread #" + str(ID) + "\tExiting...\n")
+		print("Thread #" + str(ID) + "\tExiting...")
+
+
+
+
 def main():
-	print("Running training")
-	
-	# Get the benchmark name
-	benchmark = sys.argv[1]
-	head, tail = os.path.split(benchmark)
-	benchmark_name = tail
-	
-	# Create a directory for generated files
-	print("Generating directory structure...")
-	dir_name = benchmark_name + "_DoS_noxim"
-	if(os.path.exists(dir_name)):
+	dir_base_name = "DoS_noxim_data_router" # set the base name for directory to work within
+	if(os.path.exists(dir_base_name)):
 		print("Directory exists! Overwriting...")
-		os.system("rm -rf " + dir_name)
-	os.system("mkdir " + dir_name)
-	os.system("cp " + benchmark + " " + dir_name + "/.") # Copy the file to working directory
-	os.system("mkdir " + dir_name + "/traffic_tables")		# Traffic tables are stored here. The format is <from>_to_<to>_<attack/baseline>
-	os.system("mkdir " + dir_name + "/unparsed_features")	# Raw featues generated by noxim are stored here. The format is same as above
-	os.system("mkdir " + dir_name + "/annotated_features")	# Clean and annotated featues generated by noxim are stored here. The format is same as above
-	os.system("mkdir " + dir_name + "/per_port_features")	# Features related to a single router port pair. The format is <router>_<port>
-	os.system("mkdir " + dir_name + "/logs")				# Logs generated by noxim are stored here. The format is same as above
-	os.system("mkdir " + dir_name + "/worker_logs_gen")		# Logs generated by workers who create features are stored here. The format is worker_<ID>
-	os.system("mkdir " + dir_name + "/worker_logs_train")	# Logs generated by workers who train perceptrons are stored here. The format is worker_<ID>
-	print("Done!")
+		os.system("rm -rf " + dir_base_name)
+	benchmark_directory = sys.argv[1] # This is the directory which stores all the benchmarks
 
-	print("Working directory is: " + dir_name)
+	jobs = queue.Queue()    # Create a job queue for workers
+	list_of_benchmarks = []
 
-	# Start feature generation step
-	print("Starting feature generation")
+	for benchmark in os.listdir(benchmark_directory):
+		print("Running training for", benchmark)
+		list_of_benchmarks.append(benchmark)
 
-	# Generate jobs
-	print("Generating jobs...")
-	jobs = queue.Queue()
+		# Get the benchmark name
+		benchmark_name = benchmark
+
+		# Create a directory for generated files
+		print("Generating directory structure...")
+		dir_name = dir_base_name + "/" + benchmark_name
+		os.system("mkdir -p " + dir_name)
+		os.system("cp " + benchmark_directory + "/" + benchmark + " " + dir_name + "/.") # Copy the file to working directory
+		os.system("mkdir " + dir_name + "/traffic_tables")		# Traffic tables are stored here. The format is <from>_to_<to>_<attack/baseline>
+		os.system("mkdir " + dir_name + "/unparsed_features")	# Raw featues generated by noxim are stored here. The format is same as above
+		os.system("mkdir " + dir_name + "/annotated_features")	# Clean and annotated featues generated by noxim are stored here. The format is same as above
+		os.system("mkdir " + dir_name + "/per_port_features")	# Features related to a single router port pair. The format is <router>.<port>
+		os.system("mkdir " + dir_name + "/per_router_features")	# Features related to a single router I/O pair. The format is <router>_<in/out>
+		os.system("mkdir " + dir_name + "/logs")				# Logs generated by noxim are stored here. The format is same as above
+		os.system("mkdir " + dir_name + "/worker_logs_gen")		# Logs generated by workers who create features are stored here. The format is worker_<ID>
+		os.system("mkdir " + dir_name + "/worker_logs_merge")	# Logs generated by workers who merge features are stored here. The format is worker_<ID>
+		print("Done!")
+
+		print("Working directory is: " + dir_name)
+
+		# Start feature generation step
+		print("Starting feature generation")
+
+		# Generate jobs
+		print("Generating jobs...")
+		jobs.put(((0,0), (0,1)))
+		# for router_x in range(DIM_X):
+		# 	for router_y in range(DIM_Y):
+		# 		# Generate the four pair to simulate attack between
+		# 		pairs = []
+		# 		pairs.append((0, router_y))			# west pair
+		# 		pairs.append((DIM_X - 1, router_y))	# east pair
+		# 		pairs.append((router_x, 0))			# north pair
+		# 		pairs.append((router_x, DIM_Y - 1))	# south pair
+
+		# 		router = (router_x, router_y)
+		# 		for pair in pairs:
+		# 			if(router != pair):	# Prevent pairs on edges
+		# 				jobs.put((router, pair))
+		# 				jobs.put((pair, router))
+		print("Done!")
+
+		# Create threads and generate features
+		print("Starting threads")
+		stop_threads = False
+		num_threads = int(sys.argv[2])
+		threads = []
+		for ID in range(num_threads):
+			thread = threading.Thread(target = worker_gen, daemon = True, args = (ID, jobs, benchmark_name, dir_name, lambda: stop_threads, ))
+			thread.start()
+			threads.append(thread)
+		
+		# Cleanup threads and jobs	
+		jobs.join()
+		stop_threads = True
+		for thread in threads:
+			thread.join()
+		threads.clear()
+		print("Done!")
+
+		# Merge port level features to create router level features
+		print("Starting merging")
+
+		# Generate jobs
+		print("Generating jobs")
+		jobs.put((0,0))
+		jobs.put((0,1))
+		# for router_x in range(DIM_X):
+		# 	for router_y in range(DIM_Y):
+		# 		jobs.put((router_x, router_y))
+		print("Done!")
+
+		# Create threads and start training
+		stop_threads = False
+		num_threads = int(sys.argv[3])
+		for ID in range(num_threads):
+			thread = threading.Thread(target = worker_merge,  daemon = True, args = (ID, jobs, dir_name, lambda: stop_threads,))
+			thread.start()
+			threads.append(thread)
+
+		# Cleanup threads and jobs
+		jobs.join()
+		stop_threads = True
+		for thread in threads:
+			thread.join()
+		threads.clear()
+		print("Done!")
+
+	# Meta merge per port features
+	print("Meta merging features...")
+
+	print("Generating directory structure")
+	os.system("mkdir " + dir_base_name + "/per_router_features")      # Logs generated by workers who create features are stored here. The format is worker_<ID>
+	os.system("mkdir " + dir_base_name + "/worker_logs_meta_merge")
+	
+	# generate jobs for workers
+	print("Generating jobs")
 	for router_x in range(DIM_X):
 		for router_y in range(DIM_Y):
-			# Generate the four pair to simulate attack between
-			pairs = []
-			pairs.append((0, router_y))			# west pair
-			pairs.append((DIM_X - 1, router_y))	# east pair
-			pairs.append((router_x, 0))			# north pair
-			pairs.append((router_x, DIM_Y - 1))	# south pair
-
 			router = (router_x, router_y)
-			for pair in pairs:
-				if(router != pair):	# Prevent pairs on edges
-					jobs.put((router, pair))
-					jobs.put((pair, router))
-	print("Done!")
+			jobs.put(get_router_name(router) + "_in")
+			jobs.put(get_router_name(router) + "_out")
 
-	# Create threads and generate features
+	# Create threads and meta merge features
 	print("Starting threads")
 	stop_threads = False
-	num_threads = int(sys.argv[2])
+	num_threads = int(sys.argv[3])
 	threads = []
 	for ID in range(num_threads):
-		thread = threading.Thread(target = worker_gen, daemon = True, args = (ID, jobs, benchmark_name, dir_name, lambda: stop_threads, ))
+		thread = threading.Thread(target = worker_meta_merge, daemon = True, args = (ID, jobs, list_of_benchmarks, dir_base_name, lambda: stop_threads, ))
 		thread.start()
 		threads.append(thread)
 	
-	# Cleanup threads and jobs	
+	# Cleanup threads and jobs  
 	jobs.join()
 	stop_threads = True
 	for thread in threads:
@@ -882,15 +1184,19 @@ def main():
 	threads.clear()
 	print("Done!")
 
+
 	# Test and train features
 	print("Starting training")
+
+	print("Generating directory structure...")
+	os.system("mkdir " + dir_base_name + "/worker_logs_train")  # Logs generated by workers who train perceptrons are stored here. The format is worker_<ID>
 
 	accuracy = {}	# A dict to store individual accuracies
 	accuracy_lock = threading.Lock() # A lock to synchronize access to accuracy dict
 	# Generate jobs
 	print("Generating jobs")
-	per_port_features_dir = dir_name + "/per_port_features"
-	for file_name in os.listdir(per_port_features_dir):
+	per_router_features_dir = dir_name + "/per_router_features"
+	for file_name in os.listdir(per_router_features_dir):
 		jobs.put(file_name)
 	print("Done!")
 
@@ -898,7 +1204,7 @@ def main():
 	stop_threads = False
 	num_threads = int(sys.argv[3])
 	for ID in range(num_threads):
-		thread = threading.Thread(target = worker_train, daemon = True, args = (ID, jobs, dir_name, accuracy, accuracy_lock, lambda: stop_threads,))
+		thread = threading.Thread(target = worker_train, daemon = True, args = (ID, jobs, dir_base_name, accuracy, accuracy_lock, lambda: stop_threads,))
 		thread.start()
 		threads.append(thread)
 

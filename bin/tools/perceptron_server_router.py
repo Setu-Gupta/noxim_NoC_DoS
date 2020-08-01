@@ -6,7 +6,7 @@ Date	: 1st Aug 2020
 This tool is use to train and test perceptrons on server to detect congestion in ports.
 The prediction is based on router level instead of port level
 The tool can be used via the following command
-	python3 path/to/this/file path/to/benchmark/file number_of_helper_gen_threads_to_use number_of_helper_merge_threads_to_use number_of_helper_train_threads_to_use
+	python3 path/to/this/file path/to/benchmark/file number_of_helper_gen_threads_to_use number_of_helper_hreads_to_use_for_other_tasks
 NOTE: This tool searches for noxim executable via the following path: ./../noxim
 """
 import sys						# Used to read arguments
@@ -424,7 +424,7 @@ Rets:
 	None
 """
 def worker_gen(ID, jobs, benchmark_name, working_directory, stop):
-	with open(working_directory + "/worker_logs_gen/worker_" + str(ID), "w") as log:	# Opem file for log
+	with open(working_directory + "/worker_logs_gen/worker_" + str(ID), "w") as log:	# Open file for log
 		log.write("Thread #" + str(ID) + "\tStarting...\n")
 		print("Thread #" + str(ID) + "\tStarting...")
 		
@@ -637,7 +637,7 @@ Rets:
 	None
 """
 def worker_merge(ID, jobs, working_directory, stop):
-	with open(working_directory + "/worker_logs_merge/worker_" + str(ID), "w") as log:	# Opem file for log
+	with open(working_directory + "/worker_logs_merge/worker_" + str(ID), "w") as log:	# Open file for log
 		log.write("Thread #" + str(ID) + "\tStarting...\n")
 		print("Thread #" + str(ID) + "\tStarting...")
 		
@@ -876,6 +876,10 @@ def test_train_splitter(current_info):
 	test = []
 	train = []
 
+	# Shuffle data
+	shuffle(saturated)
+	shuffle(unsaturated)
+
 	# Add saturated datapoints
 	split_index = int(TRAINING_RATIO * len(saturated))
 	train += saturated[:split_index]
@@ -911,7 +915,7 @@ Rets:
 	None
 """
 def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock,stop):
-	with open(working_directory + "/worker_logs_train/worker_" + str(ID), "w") as log:	# Opem file for log
+	with open(working_directory + "/worker_logs_train/worker_" + str(ID), "w") as log:	# Open file for log
 		log.write("Thread #" + str(ID) + "\tStarting...\n")
 		print("Thread #" + str(ID) + "\tStarting...")
 		
@@ -1061,7 +1065,6 @@ def main():
 	# Cleanup threads and jobs	
 	jobs.join()
 	stop_threads = True
-	print("Doe")
 	for thread in threads:
 		thread.join()
 	threads.clear()
@@ -1107,7 +1110,7 @@ def main():
 
 	# Create threads and start training
 	stop_threads = False
-	num_threads = int(sys.argv[4])
+	num_threads = int(sys.argv[3])
 	for ID in range(num_threads):
 		thread = threading.Thread(target = worker_train, daemon = True, args = (ID, jobs, dir_name, accuracy, accuracy_lock, lambda: stop_threads,))
 		thread.start()
