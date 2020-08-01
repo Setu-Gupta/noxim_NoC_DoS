@@ -514,7 +514,7 @@ def worker_gen(ID, jobs, benchmark_name, working_directory, stop):
 				print("Thread #" + str(ID) + "\tWriting per port feature")
 				for router_port in router_info:
 					per_port_features_file_name = working_directory + "/per_port_features/" + get_router_port_name(router_port)
-					with portalocker.Lock(per_port_features_file_name, "w") as per_port_file:
+					with portalocker.Lock(per_port_features_file_name, "a") as per_port_file:
 						for entry in router_info[router_port]:
 							per_port_file.write(", ".join(map(str, entry)) + "\n")
 				#--------------------------------------------------------------------------------------------------------------------------
