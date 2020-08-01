@@ -5,7 +5,7 @@ Date	: 1st Aug 2020
 
 This tool is use to train and test perceptrons on server to detect congestion in ports.
 The tool can be used via the following command
-	python3 path/to/this/file path/to/benchmark/file number_of_helper_threads_to_use
+	python3 path/to/this/file path/to/benchmark/file number_of_helper_gen_threads_to_use number_of_helper_train_threads_to_use
 NOTE: This tool searches for noxim executable via the following path: ./../noxim
 """
 import sys						# Used to read arguments
@@ -844,22 +844,21 @@ def main():
 	# Generate jobs
 	print("Generating jobs...")
 	jobs = queue.Queue()
-	jobs.put(((0,0), (0,1)))
-	# for router_x in range(DIM_X):
-	# 	for router_y in range(DIM_Y):
-	# 		# Generate the four pair to simulate attack between
-	# 		pairs = []
-	# 		pairs.append((0, router_y))			# west pair
-	# 		pairs.append((DIM_X - 1, router_y))	# east pair
-	# 		pairs.append((router_x, 0))			# north pair
-	# 		pairs.append((router_x, DIM_Y - 1))	# south pair
+	for router_x in range(DIM_X):
+		for router_y in range(DIM_Y):
+			# Generate the four pair to simulate attack between
+			pairs = []
+			pairs.append((0, router_y))			# west pair
+			pairs.append((DIM_X - 1, router_y))	# east pair
+			pairs.append((router_x, 0))			# north pair
+			pairs.append((router_x, DIM_Y - 1))	# south pair
 
-	# 		router = (router_x, router_y)
-	# 		for pair in pairs:
-	# 			if(router != pair):	# Prevent pairs on edges
-	# 				jobs.put((router, pair))
-	# 				jobs.put((pair, router))
-	# print("Done!")
+			router = (router_x, router_y)
+			for pair in pairs:
+				if(router != pair):	# Prevent pairs on edges
+					jobs.put((router, pair))
+					jobs.put((pair, router))
+	print("Done!")
 
 	# Create threads and generate features
 	print("Starting threads")
@@ -893,6 +892,7 @@ def main():
 
 	# Create threads and start training
 	stop_threads = False
+	num_threads = int(sys.argv[3])
 	for ID in range(num_threads):
 		thread = threading.Thread(target = worker_train, daemon = True, args = (ID, jobs, dir_name, accuracy, accuracy_lock, lambda: stop_threads,))
 		thread.start()
