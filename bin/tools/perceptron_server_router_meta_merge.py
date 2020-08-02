@@ -419,17 +419,16 @@ Args:
 	jobs				: Queue of jobs to be completed
 	benchmark_name		: Root name of the benchmark to use
 	working_directory	: Directory to store generated files
-	stop				: A function which tells thread to stop
 Rets:
 	None
 """
-def worker_gen(ID, jobs, benchmark_name, working_directory, stop):
-	with open(working_directory + "/worker_logs_gen/worker_" + str(ID), "w") as log:	# Open file for log
+def worker_gen(ID, jobs, benchmark_name, working_directory):
+	with open(working_directory + "/worker_logs_gen/worker_" + str(ID), "w", buffering = 0) as log:	# Open file for log
 		log.write("Thread #" + str(ID) + "\tStarting...\n")
 		print("Thread #" + str(ID) + "\tStarting...")
 		
 		# Compute till all jobs are done
-		while not stop():
+		while True:
 			try:
 				job = jobs.get(timeout = 0.1) # Fetch next job
 				
@@ -526,10 +525,9 @@ def worker_gen(ID, jobs, benchmark_name, working_directory, stop):
 				#--------------------------------------------------------------------------------------------------------------------------
 			
 			except queue.Empty:
-				pass
-
-		log.write("Thread #" + str(ID) + "\tExiting...\n")
-		print("Thread #" + str(ID) + "\tExiting...")
+				log.write("Thread #" + str(ID) + "\tExiting...\n")
+				print("Thread #" + str(ID) + "\tExiting...")
+				return
 
 
 
@@ -632,17 +630,16 @@ Args:
 	ID					: Thread ID
 	jobs				: Queue of jobs to be completed
 	working_directory	: Directory to store generated files
-	stop				: A function which tells thread to stop
 Rets:
 	None
 """
-def worker_merge(ID, jobs, working_directory, stop):
-	with open(working_directory + "/worker_logs_merge/worker_" + str(ID), "w") as log:	# Open file for log
+def worker_merge(ID, jobs, working_directory):
+	with open(working_directory + "/worker_logs_merge/worker_" + str(ID), "w", buffering = 0) as log:	# Open file for log
 		log.write("Thread #" + str(ID) + "\tStarting...\n")
 		print("Thread #" + str(ID) + "\tStarting...")
 		
 		# Compute till all jobs are done
-		while not stop():
+		while True:
 			try:
 				job = jobs.get(timeout = 0.1) # Fetch next job
 				
@@ -705,10 +702,10 @@ def worker_merge(ID, jobs, working_directory, stop):
 				#--------------------------------------------------------------------------------------------------------------------------
 			
 			except queue.Empty:
-				pass
+				log.write("Thread #" + str(ID) + "\tExiting...\n")
+				print("Thread #" + str(ID) + "\tExiting...")
+				return
 
-		log.write("Thread #" + str(ID) + "\tExiting...\n")
-		print("Thread #" + str(ID) + "\tExiting...")
 
 
 
@@ -910,17 +907,16 @@ Args:
 	working_directory	: Directory to store generated files
 	accuracy_dict		: A dictionary to store the accuracies
 	accuracy_lock		: A lock to access dictionary
-	stop				: A function which tells thread to stop
 Rets:
 	None
 """
-def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock,stop):
-	with open(working_directory + "/worker_logs_train/worker_" + str(ID), "w") as log:	# Open file for log
+def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock):
+	with open(working_directory + "/worker_logs_train/worker_" + str(ID), "w", buffering = 0) as log:	# Open file for log
 		log.write("Thread #" + str(ID) + "\tStarting...\n")
 		print("Thread #" + str(ID) + "\tStarting...")
 		
 		# Compute till all jobs are done
-		while not stop():
+		while True:
 			try:
 				job = jobs.get(timeout = 0.1) # Fetch next job
 
@@ -994,10 +990,9 @@ def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock,stop)
 				#--------------------------------------------------------------------------------------------------------------------------
 				
 			except queue.Empty:
-				pass
-
-		log.write("Thread #" + str(ID) + "\tExiting...\n")
-		print("Thread #" + str(ID) + "\tExiting...")
+				log.write("Thread #" + str(ID) + "\tExiting...\n")
+				print("Thread #" + str(ID) + "\tExiting...")
+				return		
 
 
 
@@ -1009,17 +1004,16 @@ Args:
 	jobs                : Queue of jobs to be completed
 	list_of_benchmarks  : List of benchmarks to iterate over
 	working_directory   : Directory to store generated files
-	stop                : A function which tells thread to stop
 Rets:
 	None
 """
-def worker_meta_merge(ID, jobs, list_of_benchmarks, working_directory, stop ):
-	with open(working_directory + "/worker_logs_meta_merge/worker_" + str(ID), "w") as log: # Open file for log
+def worker_meta_merge(ID, jobs, list_of_benchmarks, working_directory):
+	with open(working_directory + "/worker_logs_meta_merge/worker_" + str(ID), "w", buffering = 0) as log: # Open file for log
 		log.write("Thread #" + str(ID) + "\tStarting...\n")
 		print("Thread #" + str(ID) + "\tStarting...")
 		
 		# Compute till all jobs are done
-		while not stop():
+		while True:
 			try:
 				job = jobs.get(timeout = 0.1) # Fetch next job
 
@@ -1041,10 +1035,9 @@ def worker_meta_merge(ID, jobs, list_of_benchmarks, working_directory, stop ):
 				#--------------------------------------------------------------------------------------------------------------------------
 				
 			except queue.Empty:
-				pass
-
-		log.write("Thread #" + str(ID) + "\tExiting...\n")
-		print("Thread #" + str(ID) + "\tExiting...")
+				log.write("Thread #" + str(ID) + "\tExiting...\n")
+				print("Thread #" + str(ID) + "\tExiting...")
+				return
 
 
 
@@ -1088,39 +1081,31 @@ def main():
 
 		# Generate jobs
 		print("Generating jobs...")
-		jobs.put(((0,0), (0,1)))
-		# for router_x in range(DIM_X):
-		# 	for router_y in range(DIM_Y):
-		# 		# Generate the four pair to simulate attack between
-		# 		pairs = []
-		# 		pairs.append((0, router_y))			# west pair
-		# 		pairs.append((DIM_X - 1, router_y))	# east pair
-		# 		pairs.append((router_x, 0))			# north pair
-		# 		pairs.append((router_x, DIM_Y - 1))	# south pair
+		for router_x in range(DIM_X):
+			for router_y in range(DIM_Y):
+				# Generate the four pair to simulate attack between
+				pairs = []
+				pairs.append((0, router_y))			# west pair
+				pairs.append((DIM_X - 1, router_y))	# east pair
+				pairs.append((router_x, 0))			# north pair
+				pairs.append((router_x, DIM_Y - 1))	# south pair
 
-		# 		router = (router_x, router_y)
-		# 		for pair in pairs:
-		# 			if(router != pair):	# Prevent pairs on edges
-		# 				jobs.put((router, pair))
-		# 				jobs.put((pair, router))
+				router = (router_x, router_y)
+				for pair in pairs:
+					if(router != pair):	# Prevent pairs on edges
+						jobs.put((router, pair))
+						jobs.put((pair, router))
 		print("Done!")
 
 		# Create threads and generate features
 		print("Starting threads")
-		stop_threads = False
 		num_threads = int(sys.argv[2])
-		threads = []
 		for ID in range(num_threads):
-			thread = threading.Thread(target = worker_gen, daemon = True, args = (ID, jobs, benchmark_name, dir_name, lambda: stop_threads, ))
+			thread = threading.Thread(target = worker_gen, daemon = True, args = (ID, jobs, benchmark_name, dir_name, ))
 			thread.start()
-			threads.append(thread)
 		
 		# Cleanup threads and jobs	
 		jobs.join()
-		stop_threads = True
-		for thread in threads:
-			thread.join()
-		threads.clear()
 		print("Done!")
 
 		# Merge port level features to create router level features
@@ -1128,27 +1113,19 @@ def main():
 
 		# Generate jobs
 		print("Generating jobs")
-		jobs.put((0,0))
-		jobs.put((0,1))
-		# for router_x in range(DIM_X):
-		# 	for router_y in range(DIM_Y):
-		# 		jobs.put((router_x, router_y))
+		for router_x in range(DIM_X):
+			for router_y in range(DIM_Y):
+				jobs.put((router_x, router_y))
 		print("Done!")
 
 		# Create threads and start training
-		stop_threads = False
 		num_threads = int(sys.argv[3])
 		for ID in range(num_threads):
-			thread = threading.Thread(target = worker_merge,  daemon = True, args = (ID, jobs, dir_name, lambda: stop_threads,))
+			thread = threading.Thread(target = worker_merge,  daemon = True, args = (ID, jobs, dir_name, ))
 			thread.start()
-			threads.append(thread)
 
 		# Cleanup threads and jobs
 		jobs.join()
-		stop_threads = True
-		for thread in threads:
-			thread.join()
-		threads.clear()
 		print("Done!")
 
 	# Meta merge per port features
@@ -1168,22 +1145,14 @@ def main():
 
 	# Create threads and meta merge features
 	print("Starting threads")
-	stop_threads = False
 	num_threads = int(sys.argv[3])
-	threads = []
 	for ID in range(num_threads):
-		thread = threading.Thread(target = worker_meta_merge, daemon = True, args = (ID, jobs, list_of_benchmarks, dir_base_name, lambda: stop_threads, ))
+		thread = threading.Thread(target = worker_meta_merge, daemon = True, args = (ID, jobs, list_of_benchmarks, dir_base_name, ))
 		thread.start()
-		threads.append(thread)
 	
 	# Cleanup threads and jobs  
 	jobs.join()
-	stop_threads = True
-	for thread in threads:
-		thread.join()
-	threads.clear()
 	print("Done!")
-
 
 	# Test and train features
 	print("Starting training")
@@ -1201,19 +1170,13 @@ def main():
 	print("Done!")
 
 	# Create threads and start training
-	stop_threads = False
 	num_threads = int(sys.argv[3])
 	for ID in range(num_threads):
-		thread = threading.Thread(target = worker_train, daemon = True, args = (ID, jobs, dir_base_name, accuracy, accuracy_lock, lambda: stop_threads,))
+		thread = threading.Thread(target = worker_train, daemon = True, args = (ID, jobs, dir_base_name, accuracy, accuracy_lock, ))
 		thread.start()
-		threads.append(thread)
 
 	# Cleanup threads and jobs
 	jobs.join()
-	stop_threads = True
-	for thread in threads:
-		thread.join()
-	threads.clear()
 	print("Done!")
 
 	# Find average accuracy
