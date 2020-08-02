@@ -1082,6 +1082,38 @@ def main():
 		# Start feature generation step
 		print("Starting feature generation")
 
+		# Create files to lock onto later
+		print("Creating per port feature files")
+
+		feature_file_names = set()
+		# Initially add all ports
+		for router_x in range(DIM_X):
+			for router_y in range(DIM_Y):
+				for port in range(DIRECTIONS):
+					feature_file_name = str(router_x) + "_" + str(router_y) + "." + str(port)
+					feature_file_names.add(feature_file_name)
+
+		# Remove invalid ports
+		for router_x in range(DIM_X):   # Remove north ports from top row
+			feature_file_name_to_be_removed = str(router_x) + "_0." + str(DIRECTION_NORTH)
+			feature_file_names.remove(feature_file_name_to_be_removed)
+
+		for router_x in range(DIM_X):   # Remove south ports from bottom row
+			feature_file_name_to_be_removed = str(router_x) + "_" + str(DIM_Y - 1) + "." + str(DIRECTION_SOUTH)
+			feature_file_names.remove(feature_file_name_to_be_removed)
+
+		for router_y in range(DIM_Y):   # Remove east ports from leftmost row
+			feature_file_name_to_be_removed = str(DIM_X - 1) + "_" + str(router_y) + "." + str(DIRECTION_EAST)
+			feature_file_names.remove(feature_file_name_to_be_removed)
+
+		for router_y in range(DIM_Y):   # Remove west ports from rightmost row
+			feature_file_name_to_be_removed = "0_" + str(router_y) + "." + str(DIRECTION_WEST)
+			feature_file_names.remove(feature_file_name_to_be_removed)
+
+		for feature_file_name in feature_file_names:
+			cmd = "touch " + dir_name + "/per_port_features/" + feature_file_name
+			os.system(cmd)
+
 		# Generate jobs
 		print("Generating jobs...")
 		for router_x in range(DIM_X):

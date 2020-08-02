@@ -885,21 +885,20 @@ def main():
 	# Generate jobs
 	print("Generating jobs...")
 	jobs = queue.Queue()
-	jobs.put(((0,0), (1,0)))
-	# for router_x in range(DIM_X):
-	# 	for router_y in range(DIM_Y):
-	# 		# Generate the four pair to simulate attack between
-	# 		pairs = []
-	# 		pairs.append((0, router_y))			# west pair
-	# 		pairs.append((DIM_X - 1, router_y))	# east pair
-	# 		pairs.append((router_x, 0))			# north pair
-	# 		pairs.append((router_x, DIM_Y - 1))	# south pair
+	for router_x in range(DIM_X):
+		for router_y in range(DIM_Y):
+			# Generate the four pair to simulate attack between
+			pairs = []
+			pairs.append((0, router_y))			# west pair
+			pairs.append((DIM_X - 1, router_y))	# east pair
+			pairs.append((router_x, 0))			# north pair
+			pairs.append((router_x, DIM_Y - 1))	# south pair
 
-	# 		router = (router_x, router_y)
-	# 		for pair in pairs:
-	# 			if(router != pair):	# Prevent pairs on edges
-	# 				jobs.put((router, pair))
-	# 				jobs.put((pair, router))
+			router = (router_x, router_y)
+			for pair in pairs:
+				if(router != pair):	# Prevent pairs on edges
+					jobs.put((router, pair))
+					jobs.put((pair, router))
 	print("Done!")
 
 	# Create threads and generate features
