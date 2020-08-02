@@ -422,7 +422,7 @@ Rets:
 	None
 """
 def worker_gen(ID, jobs, benchmark_name, working_directory):
-	with open(working_directory + "/worker_logs_gen/worker_" + str(ID), "w", buffering = 10) as log:    # Open file for log
+	with open(working_directory + "/worker_logs_gen/worker_" + str(ID), "w", buffering = 1) as log:    # Open file for log
 		log.write("Thread #" + str(ID) + "\tStarting...\n")
 		print("Thread #" + str(ID) + "\tStarting...")
 		
@@ -729,7 +729,7 @@ Rets:
 	None
 """
 def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock):
-	with open(working_directory + "/worker_logs_train/worker_" + str(ID), "w", buffering = 10) as log:  # Open file for log
+	with open(working_directory + "/worker_logs_train/worker_" + str(ID), "w", buffering = 1) as log:  # Open file for log
 		log.write("Thread #" + str(ID) + "\tStarting...\n")
 		print("Thread #" + str(ID) + "\tStarting...")
 		
@@ -820,7 +820,7 @@ Rets:
 	None
 """
 def worker_meta_merge(ID, jobs, list_of_benchmarks, working_directory):
-	with open(working_directory + "/worker_logs_meta_merge/worker_" + str(ID), "w", buffering = 10) as log: # Open file for log
+	with open(working_directory + "/worker_logs_meta_merge/worker_" + str(ID), "w", buffering = 1) as log: # Open file for log
 		log.write("Thread #" + str(ID) + "\tStarting...\n")
 		print("Thread #" + str(ID) + "\tStarting...")
 		
@@ -863,6 +863,8 @@ def main():
 
 	jobs = queue.Queue()    # Create a job queue for workers
 	list_of_benchmarks = []
+
+	threads = []
 
 	for benchmark in os.listdir(benchmark_directory):
 		print("Running training for", benchmark)
@@ -914,9 +916,13 @@ def main():
 		for ID in range(num_threads):
 			thread = threading.Thread(target = worker_gen, daemon = True, args = (ID, jobs, benchmark_name, dir_name, ))
 			thread.start()
+			threads.append(thread)
 		
 		# Cleanup threads and jobs  
 		jobs.join()
+		for thread in threads:
+			thread.join()
+		threads.clear()
 		print("Done!")
 
 	# Meta merge per port features
@@ -965,9 +971,13 @@ def main():
 	for ID in range(num_threads):
 		thread = threading.Thread(target = worker_meta_merge, daemon = True, args = (ID, jobs, list_of_benchmarks, dir_base_name, ))
 		thread.start()
+		threads.append(thread)
 	
 	# Cleanup threads and jobs  
 	jobs.join()
+	for thread in threads:
+		thread.join()
+	threads.clear()
 	print("Done!")
 
 	# Test and train features
@@ -990,9 +1000,13 @@ def main():
 	for ID in range(num_threads):
 		thread = threading.Thread(target = worker_train, daemon = True, args = (ID, jobs, dir_base_name, accuracy, accuracy_lock, ))
 		thread.start()
+		threads.append(thread)
 
 	# Cleanup threads and jobs
 	jobs.join()
+	for thread in threads:
+		thread.join()
+	threads.clear()
 	print("Done!")
 
 	# Find average accuracy

@@ -422,7 +422,7 @@ Rets:
 	None
 """
 def worker_gen(ID, jobs, benchmark_name, working_directory):
-	with open(working_directory + "/worker_logs_gen/worker_" + str(ID), "w", buffering = 10) as log:	# Open file for log
+	with open(working_directory + "/worker_logs_gen/worker_" + str(ID), "w", buffering = 1) as log:	# Open file for log
 		log.write("Thread #" + str(ID) + "\tStarting...\n")
 		print("Thread #" + str(ID) + "\tStarting...")
 		
@@ -729,7 +729,7 @@ Rets:
 	None
 """
 def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock):
-	with open(working_directory + "/worker_logs_train/worker_" + str(ID), "w", buffering = 10) as log:	# Open file for log
+	with open(working_directory + "/worker_logs_train/worker_" + str(ID), "w", buffering = 1) as log:	# Open file for log
 		log.write("Thread #" + str(ID) + "\tStarting...\n")
 		print("Thread #" + str(ID) + "\tStarting...")
 		
@@ -818,6 +818,8 @@ def main():
 	head, tail = os.path.split(benchmark)
 	benchmark_name = tail
 	
+	threads = []
+
 	# Create a directory for generated files
 	print("Generating directory structure...")
 	dir_name = benchmark_name + "_DoS_noxim"
@@ -842,7 +844,6 @@ def main():
 
 	# Generate jobs
 	print("Generating jobs...")
-	jobs = queue.Queue()
 	for router_x in range(DIM_X):
 		for router_y in range(DIM_Y):
 			# Generate the four pair to simulate attack between
@@ -865,9 +866,13 @@ def main():
 	for ID in range(num_threads):
 		thread = threading.Thread(target = worker_gen, daemon = True, args = (ID, jobs, benchmark_name, dir_name, ))
 		thread.start()
+		threads.append(thread)
 	
 	# Cleanup threads and jobs	
 	jobs.join()
+	for thread in threads:
+		thread.join()
+	threads.clear()
 	print("Done!")
 
 	# Test and train features
@@ -888,9 +893,13 @@ def main():
 	for ID in range(num_threads):
 		thread = threading.Thread(target = worker_train, daemon = True, args = (ID, jobs, dir_name, accuracy, accuracy_lock, ))
 		thread.start()
+		threads.append(thread)
 
 	# Cleanup threads and jobs
 	jobs.join()
+	for thread in threads:
+		thread.join()
+	threads.clear()
 	print("Done!")
 
 	# Find average accuracy
