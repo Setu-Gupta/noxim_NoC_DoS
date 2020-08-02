@@ -9,13 +9,13 @@ The tool can be used via the following command
 	python3 path/to/this/file path/to/benchmark/directory number_of_helper_gen_threads_to_use number_of_helper_threads_to_use_for_other_tasks
 NOTE: This tool searches for noxim executable via the following path: ./../noxim
 """
-import sys						# Used to read arguments
-import os						# Used to run external commands
-import queue					# Used to generate job queue
-import threading				# Used to create threads			
-from copy import deepcopy as cp	# Used to copy arrays
-from random import shuffle 		# Used to mix data around
-import portalocker				# Used to synchronize
+import sys									# Used to read arguments
+import os									# Used to run external commands
+import queue								# Used to generate job queue
+import threading							# Used to create threads			
+from copy import deepcopy as cp				# Used to copy arrays
+from random import shuffle 					# Used to mix data around
+from fcntl import lockf, LOCK_EX, LOCK_UN	# Used to lock files
 
 # Dimensions of grid. It's used to calculate index of router
 DIM_X = 8
@@ -513,9 +513,11 @@ def worker_gen(ID, jobs, benchmark_name, working_directory):
 				print("Thread #" + str(ID) + "\tWriting per port feature")
 				for router_port in router_info:
 					per_port_features_file_name = working_directory + "/per_port_features/" + get_router_port_name(router_port)
-					with portalocker.Lock(per_port_features_file_name, "a") as per_port_file:
+					with open(per_port_features_file_name, "a") as per_port_file:
+						lockf(per_port_file, LOCK_EX)	# Acquire a lock
 						for entry in router_info[router_port]:
 							per_port_file.write(", ".join(map(str, entry)) + "\n")
+						lockf(per_port_file, LOCK_UN)	# Release the lock
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Log completing the job
@@ -962,16 +964,20 @@ def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock):
 				log.write("Thread #" + str(ID) +"\tWriting weights\n")
 				print("Thread #" + str(ID) +"\tWriting weights")
 				weights_file_path = working_directory + "/weights"
-				with portalocker.Lock(weights_file_path, "a") as weights_file:
+				with open(weights_file_path, "a") as weights_file:
+					lockf(weights_file, LOCK_EX)	# Acquire a lock
 					weights_file.write(", ".join(map(str, weights_and_biases)) + "\n")
+					lockf(weights_file, LOCK_UN)	# Release lock
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Step 2.2: Write accuracy
 				log.write("Thread #" + str(ID) +"\tWriting accuracy\n")
 				print("Thread #" + str(ID) +"\tWriting accuracy")
 				accuracy_file_path = working_directory + "/accuracy_report"
-				with portalocker.Lock(accuracy_file_path, "a") as accuracy_file:
+				with open(accuracy_file_path, "a") as accuracy_file:
+					lockf(accuracy_file, LOCK_EX)	# Acquire lock
 					accuracy_file.write(str(job) + "\t: " + str(accuracy) + ", " + str(false_positives) + ", " + str(false_negatives) + "\n")
+					lockf(accuracy_file, LOCK_UN)	# Release lock
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Step 3: Store accuracy
