@@ -432,6 +432,8 @@ def worker_gen(ID, jobs, benchmark_name, working_directory):
 		while True:
 			try:
 				job = jobs.get(timeout = 0.1) # Fetch next job
+
+				gc.collect()	# Collect garbage to minimize RAM usage
 				
 				# Log fetching job
 				log.write("Thread #" + str(ID) + "\tStarting job " + str(job) + "\n")
@@ -522,14 +524,12 @@ def worker_gen(ID, jobs, benchmark_name, working_directory):
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Log completing the job
-				gc.collect()	# Collect garbage to minimize RAM usage
 				jobs.task_done()
 				log.write("Thread #" + str(ID) +"\tCompleted job " + str(job) + "\n")
 				print("Thread #" + str(ID) +"\tCompleted job " + str(job))
 				#--------------------------------------------------------------------------------------------------------------------------
 			
 			except queue.Empty:
-				gc.collect()	# Collect garbage to minimize RAM usage
 				log.write("Thread #" + str(ID) + "\tExiting...\n")
 				print("Thread #" + str(ID) + "\tExiting...")
 				return
@@ -744,6 +744,8 @@ def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock):
 			try:
 				job = jobs.get(timeout = 0.1) # Fetch next job
 
+				gc.collect()	# Collect garbage to minimize RAM usage
+
 				# Log fetching job
 				log.write("Thread #" + str(ID) + "\tStarting job " + job + "\n")
 				print("Thread #" + str(ID) + "\tStarting job " + job)
@@ -814,14 +816,12 @@ def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock):
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Log completing the job
-				gc.collect()	# Collect garbage to minimize RAM usage
 				jobs.task_done()
 				log.write("Thread #" + str(ID) +"\tCompleted job " + str(job) + "\n")
 				print("Thread #" + str(ID) +"\tCompleted job " + str(job))
 				#--------------------------------------------------------------------------------------------------------------------------
 				
 			except queue.Empty:
-				gc.collect()	# Collect garbage to minimize RAM usage
 				log.write("Thread #" + str(ID) + "\tExiting...\n")
 				print("Thread #" + str(ID) + "\tExiting...")
 				return
@@ -847,6 +847,8 @@ def worker_meta_merge(ID, jobs, list_of_benchmarks, working_directory):
 			try:
 				job = jobs.get(timeout = 0.1) # Fetch next job
 
+				gc.collect()	# Collect garbage to minimize RAM usage
+
 				# Log fetching job
 				log.write("Thread #" + str(ID) + "\tStarting job " + job + "\n")
 				print("Thread #" + str(ID) + "\tStarting job " + job)
@@ -859,14 +861,12 @@ def worker_meta_merge(ID, jobs, list_of_benchmarks, working_directory):
 						os.system(cmd)
 
 				# Log completing the job
-				gc.collect()	# Collect garbage to minimize RAM usage
 				jobs.task_done()
 				log.write("Thread #" + str(ID) +"\tCompleted job " + str(job) + "\n")
 				print("Thread #" + str(ID) +"\tCompleted job " + str(job))
 				#--------------------------------------------------------------------------------------------------------------------------
 				
 			except queue.Empty:
-				gc.collect()	# Collect garbage to minimize RAM usage
 				log.write("Thread #" + str(ID) + "\tExiting...\n")
 				print("Thread #" + str(ID) + "\tExiting...")
 				return
@@ -966,7 +966,7 @@ def main():
 		print("Starting threads")
 		num_threads = int(sys.argv[2])
 		for ID in range(num_threads):
-			thread = threading.Thread(target = worker_gen, daemon = True, args = (ID, jobs, benchmark_name, dir_name, ))
+			thread = threading.Thread(target = worker_gen, args = (ID, jobs, benchmark_name, dir_name, ))
 			thread.start()
 			threads.append(thread)
 		
@@ -1021,7 +1021,7 @@ def main():
 	print("Starting threads")
 	num_threads = int(sys.argv[3])
 	for ID in range(num_threads):
-		thread = threading.Thread(target = worker_meta_merge, daemon = True, args = (ID, jobs, list_of_benchmarks, dir_base_name, ))
+		thread = threading.Thread(target = worker_meta_merge, args = (ID, jobs, list_of_benchmarks, dir_base_name, ))
 		thread.start()
 		threads.append(thread)
 	
@@ -1054,7 +1054,7 @@ def main():
 	# Create threads and start training
 	num_threads = int(sys.argv[3])
 	for ID in range(num_threads):
-		thread = threading.Thread(target = worker_train, daemon = True, args = (ID, jobs, dir_base_name, accuracy, accuracy_lock, ))
+		thread = threading.Thread(target = worker_train, args = (ID, jobs, dir_base_name, accuracy, accuracy_lock, ))
 		thread.start()
 		threads.append(thread)
 
