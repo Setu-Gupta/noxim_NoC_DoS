@@ -422,7 +422,7 @@ Rets:
 	None
 """
 def worker_gen(ID, jobs, benchmark_name, working_directory):
-	with open(working_directory + "/worker_logs_gen/worker_" + str(ID), "w", buffering = 0) as log:    # Open file for log
+	with open(working_directory + "/worker_logs_gen/worker_" + str(ID), "w", buffering = 10) as log:    # Open file for log
 		log.write("Thread #" + str(ID) + "\tStarting...\n")
 		print("Thread #" + str(ID) + "\tStarting...")
 		
@@ -729,7 +729,7 @@ Rets:
 	None
 """
 def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock):
-	with open(working_directory + "/worker_logs_train/worker_" + str(ID), "w", buffering = 0) as log:  # Open file for log
+	with open(working_directory + "/worker_logs_train/worker_" + str(ID), "w", buffering = 10) as log:  # Open file for log
 		log.write("Thread #" + str(ID) + "\tStarting...\n")
 		print("Thread #" + str(ID) + "\tStarting...")
 		
@@ -820,7 +820,7 @@ Rets:
 	None
 """
 def worker_meta_merge(ID, jobs, list_of_benchmarks, working_directory):
-	with open(working_directory + "/worker_logs_meta_merge/worker_" + str(ID), "w", buffering = 0) as log: # Open file for log
+	with open(working_directory + "/worker_logs_meta_merge/worker_" + str(ID), "w", buffering = 10) as log: # Open file for log
 		log.write("Thread #" + str(ID) + "\tStarting...\n")
 		print("Thread #" + str(ID) + "\tStarting...")
 		
