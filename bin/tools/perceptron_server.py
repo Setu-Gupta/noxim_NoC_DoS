@@ -15,6 +15,7 @@ import threading							# Used to create threads
 from copy import deepcopy as cp				# Used to copy arrays
 from random import shuffle 					# Used to mix data around
 from fcntl import lockf, LOCK_EX, LOCK_UN	# Used to lock files
+import gc									# Garbage collector
 
 # Dimensions of grid. It's used to calculate index of router
 DIM_X = 8
@@ -519,25 +520,14 @@ def worker_gen(ID, jobs, benchmark_name, working_directory):
 						lockf(per_port_file, LOCK_UN)	# Release the lock
 				#--------------------------------------------------------------------------------------------------------------------------
 
-				# Log completing the job	# 	for router_y in range(DIM_Y):
-	# 		# Generate the four pair to simulate attack between
-	# 		pairs = []
-	# 		pairs.append((0, router_y))			# west pair
-	# 		pairs.append((DIM_X - 1, router_y))	# east pair
-	# 		pairs.append((router_x, 0))			# north pair
-	# 		pairs.append((router_x, DIM_Y - 1))	# south pair
-
-	# 		router = (router_x, router_y)
-	# 		for pair in pairs:
-	# 			if(router != pair):	# Prevent pairs on edges
-	# 				jobs.put((router, pair))
-	# 				jobs.put((pair, router))
-				jobs.task_done()
+				# Log completing the job
+				gc.collect()	# Collect garbage to minimize RAM usage
 				log.write("Thread #" + str(ID) +"\tCompleted job " + str(job) + "\n")
 				print("Thread #" + str(ID) +"\tCompleted job " + str(job))
 				#--------------------------------------------------------------------------------------------------------------------------
 			
 			except queue.Empty:
+				gc.collect()	# Collect garbage to minimize RAM usage
 				log.write("Thread #" + str(ID) + "\tExiting...\n")
 				print("Thread #" + str(ID) + "\tExiting...")
 				return
@@ -795,7 +785,7 @@ def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock):
 				log.write("Thread #" + str(ID) +"\tWriting weights\n")
 				print("Thread #" + str(ID) +"\tWriting weights")
 				weights_file_path = working_directory + "/weights"
-				with portalocker.Lock(weights_file_path, "a") as weights_file:
+				with open(weights_file_path, "a") as weights_file:
 					lockf(weights_file, LOCK_EX)	# Acquire a lock
 					weights_file.write(", ".join(map(str, weights_and_biases)) + "\n")
 					lockf(weights_file, LOCK_UN)	# Release lock
@@ -822,12 +812,14 @@ def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock):
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Log completing the job
+				gc.collect()	# Collect garbage to minimize RAM usage
 				jobs.task_done()
 				log.write("Thread #" + str(ID) +"\tCompleted job " + str(job) + "\n")
 				print("Thread #" + str(ID) +"\tCompleted job " + str(job))
 				#--------------------------------------------------------------------------------------------------------------------------
 				
 			except queue.Empty:
+				gc.collect()	# Collect garbage to minimize RAM usage
 				log.write("Thread #" + str(ID) + "\tExiting...\n")
 				print("Thread #" + str(ID) + "\tExiting...")
 				return

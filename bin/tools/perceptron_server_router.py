@@ -16,6 +16,8 @@ import threading							# Used to create threads
 from copy import deepcopy as cp				# Used to copy arrays
 from random import shuffle 					# Used to mix data around
 from fcntl import lockf, LOCK_EX, LOCK_UN	# Used to lock files
+import gc									# Garbage collector
+
 
 # Dimensions of grid. It's used to calculate index of router
 DIM_X = 8
@@ -521,12 +523,14 @@ def worker_gen(ID, jobs, benchmark_name, working_directory):
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Log completing the job
+				gc.collect()	# Collect garbage to minimize RAM usage
 				jobs.task_done()
 				log.write("Thread #" + str(ID) +"\tCompleted job " + str(job) + "\n")
 				print("Thread #" + str(ID) +"\tCompleted job " + str(job))
 				#--------------------------------------------------------------------------------------------------------------------------
 			
 			except queue.Empty:
+				gc.collect()	# Collect garbage to minimize RAM usage
 				log.write("Thread #" + str(ID) + "\tExiting...\n")
 				print("Thread #" + str(ID) + "\tExiting...")
 				return
@@ -698,12 +702,14 @@ def worker_merge(ID, jobs, working_directory):
 				#--------------------------------------------------------------------------------------------------------------------------
 				
 				# Log completing the job
+				gc.collect()	# Collect garbage to minimize RAM usage
 				jobs.task_done()
 				log.write("Thread #" + str(ID) +"\tCompleted job " + str(job) + "\n")
 				print("Thread #" + str(ID) +"\tCompleted job " + str(job))
 				#--------------------------------------------------------------------------------------------------------------------------
 			
 			except queue.Empty:
+				gc.collect()	# Collect garbage to minimize RAM usage
 				log.write("Thread #" + str(ID) + "\tExiting...\n")
 				print("Thread #" + str(ID) + "\tExiting...")
 				return
@@ -992,11 +998,13 @@ def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock):
 
 				# Log completing the job
 				jobs.task_done()
+				gc.collect()	# Collect garbage to minimize RAM usage
 				log.write("Thread #" + str(ID) +"\tCompleted job " + str(job) + "\n")
 				print("Thread #" + str(ID) +"\tCompleted job " + str(job))
 				#--------------------------------------------------------------------------------------------------------------------------
 				
 			except queue.Empty:
+				gc.collect()	# Collect garbage to minimize RAM usage
 				log.write("Thread #" + str(ID) + "\tExiting...\n")
 				print("Thread #" + str(ID) + "\tExiting...")
 				return
