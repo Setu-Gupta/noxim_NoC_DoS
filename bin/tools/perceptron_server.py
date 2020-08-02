@@ -844,6 +844,7 @@ def main():
 
 	# Generate jobs
 	print("Generating jobs...")
+	jobs = queue.Queue()
 	for router_x in range(DIM_X):
 		for router_y in range(DIM_Y):
 			# Generate the four pair to simulate attack between
