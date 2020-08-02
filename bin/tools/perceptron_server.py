@@ -760,6 +760,12 @@ def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock):
 					for line in lines:
 						entry = list(map(float, line.split(",")))
 						port_info.append(entry)
+
+				if(len(port_info) == 0):
+					jobs.task_done()
+					log.write("Thread #" + str(ID) +"\tNothing to do! Completed job. " + str(job) + "\n")
+					print("Thread #" + str(ID) +"\tNothing to do! Completed job " + str(job))
+					continue
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Step 1.2: Train and test
@@ -842,23 +848,58 @@ def main():
 	# Start feature generation step
 	print("Starting feature generation")
 
+	# Create files to lock onto later
+	print("Creating per port feature files")
+
+	feature_file_names = set()
+	# Initially add all ports
+	for router_x in range(DIM_X):
+		for router_y in range(DIM_Y):
+			for port in range(DIRECTIONS):
+				feature_file_name = str(router_x) + "_" + str(router_y) + "." + str(port)
+				feature_file_names.add(feature_file_name)
+
+	# Remove invalid ports
+	for router_x in range(DIM_X):   # Remove north ports from top row
+		feature_file_name_to_be_removed = str(router_x) + "_0." + str(DIRECTION_NORTH)
+		feature_file_names.remove(feature_file_name_to_be_removed)
+
+	for router_x in range(DIM_X):   # Remove south ports from bottom row
+		feature_file_name_to_be_removed = str(router_x) + "_" + str(DIM_Y - 1) + "." + str(DIRECTION_SOUTH)
+		feature_file_names.remove(feature_file_name_to_be_removed)
+
+	for router_y in range(DIM_Y):   # Remove east ports from leftmost row
+		feature_file_name_to_be_removed = str(DIM_X - 1) + "_" + str(router_y) + "." + str(DIRECTION_EAST)
+		feature_file_names.remove(feature_file_name_to_be_removed)
+
+	for router_y in range(DIM_Y):   # Remove west ports from rightmost row
+		feature_file_name_to_be_removed = "0_" + str(router_y) + "." + str(DIRECTION_WEST)
+		feature_file_names.remove(feature_file_name_to_be_removed)
+
+	for feature_file_name in feature_file_names:
+		cmd = "touch " + dir_name + "/per_port_features/" + feature_file_name
+		os.system(cmd)
+
+	print("Done!")
+
 	# Generate jobs
 	print("Generating jobs...")
 	jobs = queue.Queue()
-	for router_x in range(DIM_X):
-		for router_y in range(DIM_Y):
-			# Generate the four pair to simulate attack between
-			pairs = []
-			pairs.append((0, router_y))			# west pair
-			pairs.append((DIM_X - 1, router_y))	# east pair
-			pairs.append((router_x, 0))			# north pair
-			pairs.append((router_x, DIM_Y - 1))	# south pair
+	jobs.put(((0,0), (1,0)))
+	# for router_x in range(DIM_X):
+	# 	for router_y in range(DIM_Y):
+	# 		# Generate the four pair to simulate attack between
+	# 		pairs = []
+	# 		pairs.append((0, router_y))			# west pair
+	# 		pairs.append((DIM_X - 1, router_y))	# east pair
+	# 		pairs.append((router_x, 0))			# north pair
+	# 		pairs.append((router_x, DIM_Y - 1))	# south pair
 
-			router = (router_x, router_y)
-			for pair in pairs:
-				if(router != pair):	# Prevent pairs on edges
-					jobs.put((router, pair))
-					jobs.put((pair, router))
+	# 		router = (router_x, router_y)
+	# 		for pair in pairs:
+	# 			if(router != pair):	# Prevent pairs on edges
+	# 				jobs.put((router, pair))
+	# 				jobs.put((pair, router))
 	print("Done!")
 
 	# Create threads and generate features
@@ -878,6 +919,10 @@ def main():
 
 	# Test and train features
 	print("Starting training")
+
+	# Create weights and accuracy file to lock onto later
+	os.system("touch " + dir_name + "/accuracy_report")
+	os.system("touch " + dir_name + "/weights")
 
 	accuracy = {}	# A dict to store individual accuracies
 	accuracy_lock = threading.Lock() # A lock to synchronize access to accuracy dict
