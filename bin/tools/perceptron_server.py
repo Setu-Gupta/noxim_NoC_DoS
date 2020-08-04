@@ -941,7 +941,6 @@ def main():
 	print("Starting  processes")
 	num_processes = int(sys.argv[3])
 	for ID in range(num_processes):
-		print("Creatung")
 		process = mp.Process(target = worker_train, args = (ID, jobs, dir_name, accuracy, accuracy_lock, ))
 		process.start()
 		processes.append(process)
