@@ -5,17 +5,16 @@ Date	: 1st Aug 2020
 
 This tool is use to train and test perceptrons on server to detect congestion in ports.
 The tool can be used via the following command
-	python3 path/to/this/file path/to/benchmark/file number_of_helper_gen_threads_to_use number_of_helper_train_threads_to_use
+	python3 path/to/this/file path/to/benchmark/file number_of_helper_gen_processes_to_use number_of_helper_train_processes_to_use
 NOTE: This tool searches for noxim executable via the following path: ./../noxim
 """
 import sys									# Used to read arguments
 import os									# Used to run external commands
-import queue								# Used to generate job queue
-import threading							# Used to create threads			
+import multiprocessing as mp				# Used to parallelize workload
+from queue import Empty						# Used for Empty exception
 from copy import deepcopy as cp				# Used to copy arrays
 from random import shuffle 					# Used to mix data around
 from fcntl import lockf, LOCK_EX, LOCK_UN	# Used to lock files
-import gc									# Garbage collector
 
 # Dimensions of grid. It's used to calculate index of router
 DIM_X = 8
@@ -142,8 +141,8 @@ def parse_features(feature_file, router_and_ports, log, ID):
 	all_info = {}	# This dictionary stores the parsed data
 
 	# Read data from csv file
-	log.write("Thread #" + str(ID) + "\tReading from file: " + feature_file + "\n")
-	print("Thread #" + str(ID) + "\tReading from file: " + feature_file)
+	log.write("Process #" + str(ID) + "\tReading from file: " + feature_file + "\n")
+	print("Process #" + str(ID) + "\tReading from file: " + feature_file)
 	with open(feature_file, 'r') as csv_in:
 		current_info = csv_in.readline()
 		while current_info:
@@ -172,8 +171,8 @@ def parse_features(feature_file, router_and_ports, log, ID):
 			current_info = csv_in.readline()	# Read next line
 
 	# Generate output dictionary
-	log.write("Thread #" + str(ID) + "\tGenerating Router info\n")
-	print("Thread #" + str(ID) + "\tGenerating Router info")
+	log.write("Process #" + str(ID) + "\tGenerating Router info\n")
+	print("Process #" + str(ID) + "\tGenerating Router info")
 	router_info = {}	 # Initialize output dictionary
 	for router_port in router_and_ports:
 		router_info[router_port] = [] # Initialize entry in all info
@@ -223,8 +222,8 @@ The input and output formats are
 	{((router_x, router_Y), port)	:	[[cycle, buffer_status, cycles_since_last_flit, stalled_flits, transmitted flits, buffer_waiting_time], ...], ...}
 """
 def pre_process(router_info, log, ID):
-	log.write("Thread #" + str(ID) + "\tPre-processing data\n")
-	print("Thread #" + str(ID) + "\tPre-processing data")
+	log.write("Process #" + str(ID) + "\tPre-processing data\n")
+	print("Process #" + str(ID) + "\tPre-processing data")
 	if(not ENABLE_AVG_WINDOW):	# Return without doing anything if not enabled
 		return router_info
 
@@ -238,8 +237,8 @@ def pre_process(router_info, log, ID):
 	# This makes the time complexity independent of AVG_CYCLES
 
 	# Start moving average process
-	log.write("Thread #" + str(ID) + "\tTaking moving average of size " + str(AVG_CYCLES) + "\n")
-	print("Thread #" + str(ID) + "\tTaking moving average of size " + str(AVG_CYCLES))
+	log.write("Process #" + str(ID) + "\tTaking moving average of size " + str(AVG_CYCLES) + "\n")
+	print("Process #" + str(ID) + "\tTaking moving average of size " + str(AVG_CYCLES))
 	for router_port in router_info:
 		windows = {	# initialize windows
 			PARSED_BUFFER_STATUS 			: [0] * AVG_CYCLES,
@@ -283,8 +282,8 @@ Rets:
 
 """
 def annotate_data(router_info, start_cycle, log, ID):
-	log.write("Thread #" + str(ID) + "\tAnnotating data\n")
-	print("Thread #" + str(ID) + "\tAnnotating data")
+	log.write("Process #" + str(ID) + "\tAnnotating data\n")
+	print("Process #" + str(ID) + "\tAnnotating data")
 	for router_port in router_info: # Iterate over all ports
 		for entry_idx in range(len(router_info[router_port])):
 			if(router_info[router_port][entry_idx][PARSED_CYCLE] >= start_cycle):	# Check if the cycle for current entry exceeds start_cycle and annotate accordingly
@@ -304,8 +303,8 @@ Rets:
 	merged	: Merged dataset
 """
 def merge_info(set_1, set_2, log, ID):
-	log.write("Thread #" + str(ID) + "\tMerging\n")
-	print("Thread #" + str(ID) + "\tMerging")
+	log.write("Process #" + str(ID) + "\tMerging\n")
+	print("Process #" + str(ID) + "\tMerging")
 	merged = {}
 	for router_port in set_1:
 		merged[router_port] = cp(set_1[router_port])	# Add enteries from set 1
@@ -407,7 +406,7 @@ def get_router_port_name(router_port):
 
 
 """
-Method called by threads to generate features.
+Method called by processes to generate features.
 The method does the following:
 1.) Creates traffic tables for attack and baseline scenarios
 2.) Calls noxim to generate feature files
@@ -424,19 +423,17 @@ Rets:
 """
 def worker_gen(ID, jobs, benchmark_name, working_directory):
 	with open(working_directory + "/worker_logs_gen/worker_" + str(ID), "w", buffering = 1) as log:	# Open file for log
-		log.write("Thread #" + str(ID) + "\tStarting...\n")
-		print("Thread #" + str(ID) + "\tStarting...")
+		log.write("Process #" + str(ID) + "\tStarting...\n")
+		print("Process #" + str(ID) + "\tStarting...")
 		
 		# Compute till all jobs are done
 		while True:
 			try:
 				job = jobs.get(timeout = 0.1) # Fetch next job
 				
-				gc.collect()	# Collect garbage to minimize RAM usage
-
 				# Log fetching job
-				log.write("Thread #" + str(ID) + "\tStarting job " + str(job) + "\n")
-				print("Thread #" + str(ID) + "\tStarting job " + str(job))
+				log.write("Process #" + str(ID) + "\tStarting job " + str(job) + "\n")
+				print("Process #" + str(ID) + "\tStarting job " + str(job))
 				
 				# Fetch source and destination of attack
 				src = job[0]
@@ -447,8 +444,8 @@ def worker_gen(ID, jobs, benchmark_name, working_directory):
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Step 1: Create traffic tables
-				log.write("Thread #" + str(ID) + "\tWriting traffic tables\n")
-				print("Thread #" + str(ID) + "\tWriting traffic tables")
+				log.write("Process #" + str(ID) + "\tWriting traffic tables\n")
+				print("Process #" + str(ID) + "\tWriting traffic tables")
 				
 				source_file_path = working_directory + "/" + benchmark_name
 				baseline_file_path = working_directory + "/traffic_tables/" + get_router_name(src) + "_to_" + get_router_name(dst) + "_baseline"
@@ -466,8 +463,8 @@ def worker_gen(ID, jobs, benchmark_name, working_directory):
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Step 2: Call noxim to generate features
-				log.write("Thread #" + str(ID) + "\tCalling noxim\n")
-				print("Thread #" + str(ID) + "\tCalling noxim")
+				log.write("Process #" + str(ID) + "\tCalling noxim\n")
+				print("Process #" + str(ID) + "\tCalling noxim")
 
 				feature_file_path_baseline = working_directory + "/unparsed_features/" + get_router_name(src) + "_to_" + get_router_name(dst) + "_baseline"
 				feature_file_path_attack = working_directory + "/unparsed_features/" + get_router_name(src) + "_to_" + get_router_name(dst) + "_attack"
@@ -483,14 +480,14 @@ def worker_gen(ID, jobs, benchmark_name, working_directory):
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Step 3.1: Generating path
-				log.write("Thread #" + str(ID) + "\tGenerating path\n")
-				print("Thread #" + str(ID) + "\tGenerating path")
+				log.write("Process #" + str(ID) + "\tGenerating path\n")
+				print("Process #" + str(ID) + "\tGenerating path")
 				path = generate_path(list(src), list(dst))
 				#--------------------------------------------------------------------------------------------------------------------------
 				
 				# Step 3.2: Parse features
-				log.write("Thread #" + str(ID) + "\tParsing features\n")
-				print("Thread #" + str(ID) + "\tParsing features")
+				log.write("Process #" + str(ID) + "\tParsing features\n")
+				print("Process #" + str(ID) + "\tParsing features")
 				
 				router_info_baseline = parse_features(feature_file_path_baseline, path, log, ID)
 				router_info_attack = parse_features(feature_file_path_attack, path, log, ID)
@@ -511,8 +508,8 @@ def worker_gen(ID, jobs, benchmark_name, working_directory):
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Step 5: Write clean and annotated data
-				log.write("Thread #" + str(ID) + "\tWriting per port feature\n")
-				print("Thread #" + str(ID) + "\tWriting per port feature")
+				log.write("Process #" + str(ID) + "\tWriting per port feature\n")
+				print("Process #" + str(ID) + "\tWriting per port feature")
 				for router_port in router_info:
 					per_port_features_file_name = working_directory + "/per_port_features/" + get_router_port_name(router_port)
 					with open(per_port_features_file_name, "a") as per_port_file:
@@ -523,14 +520,13 @@ def worker_gen(ID, jobs, benchmark_name, working_directory):
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Log completing the job
-				jobs.task_done()
-				log.write("Thread #" + str(ID) +"\tCompleted job " + str(job) + "\n")
-				print("Thread #" + str(ID) +"\tCompleted job " + str(job))
+				log.write("Process #" + str(ID) +"\tCompleted job " + str(job) + "\n")
+				print("Process #" + str(ID) +"\tCompleted job " + str(job))
 				#--------------------------------------------------------------------------------------------------------------------------
 			
-			except queue.Empty:
-				log.write("Thread #" + str(ID) + "\tExiting...\n")
-				print("Thread #" + str(ID) + "\tExiting...")
+			except Empty:
+				log.write("Process #" + str(ID) + "\tExiting...\n")
+				print("Process #" + str(ID) + "\tExiting...")
 				return
 
 
@@ -719,7 +715,7 @@ def test_train_splitter(current_info):
 
 
 """
-Method called by threads to generate weights.
+Method called by processes to generate weights.
 The method does the following:
 1.) Trains and test a router port pair
 2.) Writes the learnt weights and accuracy to files
@@ -735,19 +731,17 @@ Rets:
 """
 def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock):
 	with open(working_directory + "/worker_logs_train/worker_" + str(ID), "w", buffering = 1) as log:	# Open file for log
-		log.write("Thread #" + str(ID) + "\tStarting...\n")
-		print("Thread #" + str(ID) + "\tStarting...")
+		log.write("Process #" + str(ID) + "\tStarting...\n")
+		print("Process #" + str(ID) + "\tStarting...")
 		
 		# Compute till all jobs are done
 		while True:
 			try:
 				job = jobs.get(timeout = 0.1) # Fetch next job
 
-				gc.collect()	# Collect garbage to minimize RAM usage
-
 				# Log fetching job
-				log.write("Thread #" + str(ID) + "\tStarting job " + job + "\n")
-				print("Thread #" + str(ID) + "\tStarting job " + job)
+				log.write("Process #" + str(ID) + "\tStarting job " + job + "\n")
+				print("Process #" + str(ID) + "\tStarting job " + job)
 
 				# Get the coordinates and port from job name
 				router_x = int(job.split("_")[0])
@@ -756,8 +750,8 @@ def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock):
 				router_port = ((router_x, router_y), port)
 
 				# Step 1.1: Read feature file
-				log.write("Thread #" + str(ID) +"\tParsing feature file\n")
-				print("Thread #" + str(ID) +"\tParsing feature file")
+				log.write("Process #" + str(ID) +"\tParsing feature file\n")
+				print("Process #" + str(ID) +"\tParsing feature file")
 				
 				# Read the features
 				port_info = []
@@ -769,15 +763,14 @@ def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock):
 						port_info.append(entry)
 
 				if(len(port_info) == 0):
-					jobs.task_done()
-					log.write("Thread #" + str(ID) +"\tNothing to do! Completed job. " + str(job) + "\n")
-					print("Thread #" + str(ID) +"\tNothing to do! Completed job " + str(job))
+					log.write("Process #" + str(ID) +"\tNothing to do! Completed job. " + str(job) + "\n")
+					print("Process #" + str(ID) +"\tNothing to do! Completed job " + str(job))
 					continue
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Step 1.2: Train and test
-				log.write("Thread #" + str(ID) +"\tTesting and training\n")
-				print("Thread #" + str(ID) +"\tTesting and training")
+				log.write("Process #" + str(ID) +"\tTesting and training\n")
+				print("Process #" + str(ID) +"\tTesting and training")
 
 				accuracy = 0
 				test, train = test_train_splitter(port_info)
@@ -785,8 +778,8 @@ def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock):
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Step 2.1: Write weights
-				log.write("Thread #" + str(ID) +"\tWriting weights\n")
-				print("Thread #" + str(ID) +"\tWriting weights")
+				log.write("Process #" + str(ID) +"\tWriting weights\n")
+				print("Process #" + str(ID) +"\tWriting weights")
 				weights_file_path = working_directory + "/weights"
 				with open(weights_file_path, "a") as weights_file:
 					lockf(weights_file, LOCK_EX)	# Acquire a lock
@@ -795,8 +788,8 @@ def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock):
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Step 2.2: Write accuracy
-				log.write("Thread #" + str(ID) +"\tWriting accuracy\n")
-				print("Thread #" + str(ID) +"\tWriting accuracy")
+				log.write("Process #" + str(ID) +"\tWriting accuracy\n")
+				print("Process #" + str(ID) +"\tWriting accuracy")
 				accuracy_file_path = working_directory + "/accuracy_report"
 				with open(accuracy_file_path, "a") as accuracy_file:
 					lockf(accuracy_file, LOCK_EX)	# Acquire lock
@@ -805,24 +798,23 @@ def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock):
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Step 3: Store accuracy
-				log.write("Thread #" + str(ID) +"\tAccuracy for " + job + " is " + str(accuracy) + "\n")
-				print("Thread #" + str(ID) +"\tAccuracy for " + job + " is " + str(accuracy))
+				log.write("Process #" + str(ID) +"\tAccuracy for " + job + " is " + str(accuracy) + "\n")
+				print("Process #" + str(ID) +"\tAccuracy for " + job + " is " + str(accuracy))
 
-				log.write("Thread #" + str(ID) +"\tStoring accuracy\n")
-				print("Thread #" + str(ID) +"\tStoring accuracy")
+				log.write("Process #" + str(ID) +"\tStoring accuracy\n")
+				print("Process #" + str(ID) +"\tStoring accuracy")
 				with accuracy_lock:
 					accuracy_dict[job] = accuracy
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Log completing the job
-				jobs.task_done()
-				log.write("Thread #" + str(ID) +"\tCompleted job " + str(job) + "\n")
-				print("Thread #" + str(ID) +"\tCompleted job " + str(job))
+				log.write("Process #" + str(ID) +"\tCompleted job " + str(job) + "\n")
+				print("Process #" + str(ID) +"\tCompleted job " + str(job))
 				#--------------------------------------------------------------------------------------------------------------------------
 				
-			except queue.Empty:
-				log.write("Thread #" + str(ID) + "\tExiting...\n")
-				print("Thread #" + str(ID) + "\tExiting...")
+			except Empty:
+				log.write("Process #" + str(ID) + "\tExiting...\n")
+				print("Process #" + str(ID) + "\tExiting...")
 				return
 
 
@@ -835,7 +827,7 @@ def main():
 	head, tail = os.path.split(benchmark)
 	benchmark_name = tail
 	
-	threads = []
+	processes = []
 
 	# Create a directory for generated files
 	print("Generating directory structure...")
@@ -895,7 +887,7 @@ def main():
 
 	# Generate jobs
 	print("Generating jobs...")
-	jobs = queue.Queue()
+	jobs = mp.Queue()
 	for router_x in range(DIM_X):
 		for router_y in range(DIM_Y):
 			# Generate the four pair to simulate attack between
@@ -912,20 +904,19 @@ def main():
 					jobs.put((pair, router))
 	print("Done!")
 
-	# Create threads and generate features
-	print("Starting threads")
-	num_threads = int(sys.argv[2])
-	for ID in range(num_threads):
-		thread = threading.Thread(target = worker_gen, args = (ID, jobs, benchmark_name, dir_name, ))
-		thread.start()
-		threads.append(thread)
+	# Create processes and generate features
+	print("Starting processes")
+	num_processes = int(sys.argv[2])
+	for ID in range(num_processes):
+		process = mp.Process(target = worker_gen, args = (ID, jobs, benchmark_name, dir_name, ))
+		process.start()
+		processes.append(process)
 	
-	# Cleanup threads and jobs	
-	jobs.join()
+	# Cleanup processes and jobs	
 	print("Cleaned jobs")
-	for thread in threads:
-		thread.join()
-	threads.clear()
+	for process in processes:
+		process.join()
+	processes.clear()
 	print("Done!")
 
 	# Test and train features
@@ -935,28 +926,30 @@ def main():
 	os.system("touch " + dir_name + "/accuracy_report")
 	os.system("touch " + dir_name + "/weights")
 
-	accuracy = {}	# A dict to store individual accuracies
-	accuracy_lock = threading.Lock() # A lock to synchronize access to accuracy dict
+	manager = mp.Manager()
+	accuracy = manager.dict() # A dict to store individual accuracies
+	accuracy_lock = mp.Lock() # A lock to synchronize access to accuracy dict
 	# Generate jobs
 	print("Generating jobs")
 	per_port_features_dir = dir_name + "/per_port_features"
 	for file_name in os.listdir(per_port_features_dir):
-		jobs.put(file_name)
+		jobs.put(file_name, block = True, timeout = None)
+	# jobs.put("EXIT")
 	print("Done!")
 
-	# Create threads and start training
-	print("Starting  threads")
-	num_threads = int(sys.argv[3])
-	for ID in range(num_threads):
-		thread = threading.Thread(target = worker_train, args = (ID, jobs, dir_name, accuracy, accuracy_lock, ))
-		thread.start()
-		threads.append(thread)
+	# Create processes and start training
+	print("Starting  processes")
+	num_processes = int(sys.argv[3])
+	for ID in range(num_processes):
+		print("Creatung")
+		process = mp.Process(target = worker_train, args = (ID, jobs, dir_name, accuracy, accuracy_lock, ))
+		process.start()
+		processes.append(process)
 
-	# Cleanup threads and jobs
-	jobs.join()
-	for thread in threads:
-		thread.join()
-	threads.clear()
+	# Cleanup processes and jobs
+	for process in processes:
+		process.join()
+	processes.clear()
 	print("Done!")
 
 	# Find average accuracy
