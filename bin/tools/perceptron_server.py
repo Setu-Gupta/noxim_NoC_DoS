@@ -208,7 +208,7 @@ def parse_features(feature_file, router_and_ports, log, ID):
 
 # Length of moving average window
 AVG_CYCLES = 5
-ENABLE_AVG_WINDOW = True
+ENABLE_AVG_WINDOW = False
 """
 Modifies the data in router info.
 Currently configured to take a moving window average on various parameters. The size of window is AVG_CYCLES
@@ -549,7 +549,7 @@ def predict(bias, weights, vector):
 
 
 # Learning parameters
-EPOCHS = 3000
+EPOCHS = 1500
 LEARNING_RATE = 0.00005
 """
 Learns the weights for percepton
