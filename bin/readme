@@ -57,7 +57,7 @@ Compressing using multiple threads:
 	tar -cf - path/to/dir | pigz -9 -p num_threads > archive_name
 	* -9 is the highest compression level
 Decompressing tar.gz
-	pigz -dck archive_name | pv | tar xf -
+	pigz -dc archive_name | pv | tar xf -
 Spliting archive
 	split -b block_size(like 50M) path/to/archive "prefix name od parts"
 Joining archive
