@@ -533,15 +533,18 @@ def worker_gen(ID, jobs, benchmark_name, working_directory):
 """
 Tells whether the perceptron was activated or not
 Args:
-	bias    : Bias
-	weights : Weight Vector
-	vector  : Input to percepton
+	bias	: Bias
+	weights	: Weight Vector
+	vector	: Input to percepton
 """
 def predict(bias, weights, vector):
+	used_idx = [0,1,4] # Use only buffer status, cycles since last flit and buffer waiting time
+
 	activation = bias
 
 	assert(len(vector) == len(weights))
-	for idx in range(len(weights)): # Take inner product
+	# for idx in range(len(weights)):	# Take inner product
+	for idx in used_idx:	# Take inner product
 		activation += weights[idx] * vector[idx]
 
 	return 1.0 if activation >= 0.0 else 0.0
@@ -550,31 +553,33 @@ def predict(bias, weights, vector):
 
 # Learning parameters
 EPOCHS = 1500
-LEARNING_RATE = 0.00005
+LEARNING_RATE = 0.00001
 """
 Learns the weights for percepton
 Args:
-	train   : Training dataset
-	log             : File to print log to
-	ID              : ID of the caller Process
+	train	: Training dataset
+	log				: File to print log to
+	ID				: ID of the caller thread
 Rets:
-	bias    : Learnt bias
-	weights : Learnt weights
+	bias	: Learnt bias
+	weights	: Learnt weights
 """
 def train_weights(train, log, ID):
+	used_idx = [0,1,4] # Use only buffer status, cycles since last flit and buffer waiting time
 	bias = 0.0
 	weights = [0] * PARSED_FEATURE_COUNT
-	for epoch in range(EPOCHS): # Iterate over all epochs
+	for epoch in range(EPOCHS):	# Iterate over all epochs
 		log.write("Running epoch: " + str(epoch + 1) + " out of " + str(EPOCHS) + ":\t")
-		shuffle(train)  # Shuffle dataset on each pass
+		shuffle(train)	# Shuffle dataset on each pass
 		sq_error = 0.0
 		for data_point in train:
-			data_features = data_point[1:-1]    # Ignore the annotation and cycle count
+			data_features = data_point[1:-1]	# Ignore the annotation and cycle count
 			prediction = predict(bias, weights, data_features) # Predict based on current weights and bias
-			error = data_point[-1] - prediction # Get error
-			sq_error += error ** 2  # Update squared error
+			error = data_point[-1] - prediction	# Get error
+			sq_error += error ** 2	# Update squared error
 			bias += LEARNING_RATE * error # Update bias
-			for w_idx in range(len(weights)):   # Update weights
+			# for w_idx in range(len(weights)):	# Update weights
+			for w_idx in used_idx:	# Update weights
 				weights[w_idx] += LEARNING_RATE * error * data_features[w_idx]
 		log.write(str(sq_error) + "\n")
 	return bias, weights
