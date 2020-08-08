@@ -42,6 +42,26 @@ to_test		: files on root		: This is a model set of files for various scenarios. 
 		  FFT_pir_por		: This directory has all the previous files but with por = pir.
 		  FFT_pir_por/with_attack	: Same as before
 full_communication	: This contains files and corresponding logs for tables representing full communication (Explained below).
+traces		: Rohdinia and Splash 2 benchmarks
+all_benchmarks	: This folder has all the benchmarks with updated field such that network doesn't get saturated
+all_benchmarks_reduced	: This folder has all the benchmarks with updated field such that network doesn't get saturated and t_on is <= 21e3
+
+NOTE: Some folders may be present as compressed tar.gz files due to space constraints.
+NOTE: Some tar.gz may also be split into part
+
+-----------------------------------------------------------------------------------------------------
+
+Handling tar.gz files
+
+Compressing using multiple threads:
+	tar -cf - path/to/dir | pigz -9 -p num_threads > archive_name
+	* -9 is the highest compression level
+Decompressing tar.gz
+	pigz -dck archive_name | pv | tar xf -
+Spliting archive
+	split -b block_size(like 50M) path/to/archive "prefix name od parts"
+Joining archive
+	cat prefix_name* > archive_name
 
 -----------------------------------------------------------------------------------------------------
 
