@@ -570,7 +570,7 @@ def get_output_ports(router):
 	ports.append(router_port_north)
 	ports.append(router_port_south)
 	ports.append(router_port_east)
-	ports.append(router_port_north)
+	ports.append(router_port_west)
 
 	return ports
 
