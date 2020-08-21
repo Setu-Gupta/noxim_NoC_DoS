@@ -552,7 +552,7 @@ def predict(bias, weights, vector):
 
 
 # Learning parameters
-EPOCHS = 1500
+EPOCHS = 100
 LEARNING_RATE = 0.00001
 """
 Learns the weights for percepton
@@ -740,7 +740,8 @@ def worker_train(ID, jobs, working_directory, accuracy_dict, accuracy_lock):
 		print("Process #" + str(ID) + "\tStarting...")
 		
 		# Compute till all jobs are done
-		while True:
+		while True:/home/iiitd/DoS_NoC/noxim/bin/tools/DoS_noxim_data_router
+
 			try:
 				job = jobs.get(timeout = 0.1) # Fetch next job
 
