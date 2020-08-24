@@ -184,7 +184,6 @@ def main():
 
 		bw = parsed_data[2:]	# Weights and biases
 		weights_dict[router_name] = bw
-		print(router_name)
 	
 	# Step 3: Iterate over benchmarks and test 
 	jobs = mp.Queue()
@@ -204,7 +203,6 @@ def main():
 		router_feature_file_path = benchmark_path + "/per_router_features"
 		print(router_feature_file_path)
 		for file in weights_dict:
-			print(file)
 			jobs.put(file)
 
 		# Create processes and get accuracy
