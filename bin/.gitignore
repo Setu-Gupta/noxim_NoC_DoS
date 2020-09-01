@@ -1,5 +1,6 @@
-log
+log*
 tmp_logs
 build/*
 features
 per_log
+test_vectors/*

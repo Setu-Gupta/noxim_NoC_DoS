@@ -601,7 +601,7 @@ void parseCmdLine(int arg_num, char *arg_vet[])
 		GlobalParams::simulation_time = atoi(arg_vet[++i]);
 	    else if (!strcmp(arg_vet[i], "-asciimonitor")) 
 		GlobalParams::ascii_monitor = true;
-	    else if (!strcmp(arg_vet[i], "-config") || !strcmp(arg_vet[i], "-power") || !strcmp(arg_vet[i], "-features") || !strcmp(arg_vet[i], "-weights"))
+	    else if (!strcmp(arg_vet[i], "-config") || !strcmp(arg_vet[i], "-power") || !strcmp(arg_vet[i], "-features") || !strcmp(arg_vet[i], "-weights") || !strcmp(arg_vet[i], "-accuracy"))
 		// -config is managed from configure function
 		// i++ skips the configuration file name 
 		i++;
@@ -679,6 +679,14 @@ void configure(int arg_num, char *arg_vet[]) {
     for (int i = 1; i < arg_num; i++) {
         if (!strcmp(arg_vet[i], "-weights")) {
             GlobalParams::weights_file_name = arg_vet[++i];
+            break;
+        }
+    }
+
+    GlobalParams::accuracy_op_file_name = NO_ACCURACY_OP;
+    for (int i = 1; i < arg_num; i++) {
+        if (!strcmp(arg_vet[i], "-accuracy")) {
+            GlobalParams::accuracy_op_file_name = arg_vet[++i];
             break;
         }
     }

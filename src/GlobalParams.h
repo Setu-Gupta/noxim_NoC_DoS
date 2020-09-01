@@ -100,6 +100,7 @@ using namespace std;
 // Deafult values for feature and weight file
 #define NO_FEATURES         "NO_FEATURES_EXTRACTION"
 #define NO_LOCALIZATION     "NO_LOCALIZATION"
+#define NO_ACCURACY_OP      "NO_ACCURACY_OP"
 
 typedef struct {
     pair<double, double> ber;
@@ -198,6 +199,7 @@ struct GlobalParams {
     static int channel_selection;
     static string weights_file_name;
     static string feature_file_name;
+    static string accuracy_op_file_name;
 };
 
 #endif

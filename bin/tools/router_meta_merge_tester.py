@@ -6,7 +6,6 @@ Date	: 24th Aug 2020
 This tool is use to test perceptrons on server to detect congestion in ports.
 The tool can be used via the following command
 	python3 path/to/this/file path/to/data/directory number_of_helper_gen_processes_to_use
-NOTE: This tool searches for noxim executable via the following path: ./../noxim
 """
 
 import os									# Used to iterate over directories

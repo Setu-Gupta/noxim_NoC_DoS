@@ -14,6 +14,7 @@
 #include "DataStructs.h"
 #include "GlobalParams.h"
 #include "FeatureCollector.h"
+#include "Localizer.h"
 
 #include <csignal>
 
@@ -54,17 +55,20 @@ int sc_main(int arg_num, char *arg_vet[])
 
 
     FeatureCollector fc;
-
+    Localizer * loc;
     // Signals
     sc_clock clock("clock", GlobalParams::clock_period_ps, SC_PS);
     sc_signal <bool> reset;
 
     // NoC instance
     n = new NoC("NoC", &fc);
+    loc = new Localizer("Localizer", n);
 
-    // n->fc = &fc;
     n->clock(clock);
     n->reset(reset);
+
+    loc->clock(clock);
+    loc->reset(reset);
 
     // Trace signals
     sc_trace_file *tf = NULL;

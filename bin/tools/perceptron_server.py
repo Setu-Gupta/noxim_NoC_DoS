@@ -640,7 +640,7 @@ Args:
 	ID				: ID of the caller thread
 Rets:
 	accuracy			: A value between 0 and 100 indicating percentage accuracy
-	weights_and_biases	: A list with the following format: [router_x, router_y, port, bias, weights_1, weights_2, ...]
+	weights_and_biases	: A list with the following format: [router_id, port, bias, weights_1, weights_2, ...]
 	False positives	: Percentage of predictions which were false positives
 	False negatives	: Percentage of predictions which were false negatives
 """

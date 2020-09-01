@@ -56,6 +56,7 @@ SC_MODULE(ProcessingElement)
     bool attack_started;	// Default value is false. It is set to true when attack packet is picked from traffic table
     bool attack_pipeline_filled;// Default value is false. It is set to true as soon as the first attack packet gets reply
 
+    bool disable = false;   // Disable the IP
 
     // Functions
     void rxProcess();		// The receiving process

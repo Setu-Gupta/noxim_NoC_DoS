@@ -62,3 +62,4 @@ bool GlobalParams::ascii_monitor;
 int GlobalParams::channel_selection;
 string GlobalParams::weights_file_name;
 string GlobalParams::feature_file_name;
+string GlobalParams::accuracy_op_file_name;

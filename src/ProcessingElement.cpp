@@ -73,7 +73,7 @@ void ProcessingElement::txProcess()
     } else {
 	Packet packet;
 
-	if (canShot(packet)) {
+	if (canShot(packet) && !disable) {
 	    packet_queue.push(packet);
 	    transmittedAtPreviousCycle = true;
 	} else
@@ -148,7 +148,13 @@ Flit ProcessingElement::nextFlit()
 
     packet_queue.front().flit_left--;
     if (packet_queue.front().flit_left == 0)
-	packet_queue.pop();
+    {
+    	packet_queue.pop();
+    	if(disable)	// Clear packet queue
+    		while(!packet_queue.empty())
+    			packet_queue.pop();
+    }
+	
 
     return flit;
 }
