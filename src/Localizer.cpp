@@ -4,6 +4,14 @@ using namespace std;
 
 void Localizer::setup_grid()
 {
+
+	// Return if localization is not enabled
+	if(GlobalParams::weights_file_name == NO_LOCALIZATION)
+		return;
+	if(GlobalParams::accuracy_op_file_name == NO_ACCURACY_OP)
+		return;
+
+
 	localizer_grid = new LocalizerRouter**[GlobalParams::mesh_dim_x];
 	for(int x = 0; x < GlobalParams::mesh_dim_x; x++)
 	{
@@ -23,16 +31,25 @@ void Localizer::setup_grid()
 
 void Localizer::run_localization()
 {
+	// Return if localization is not enabled
+	if(GlobalParams::weights_file_name == NO_LOCALIZATION)
+		return;
+	if(GlobalParams::accuracy_op_file_name == NO_ACCURACY_OP)
+		return;
+
+
 	if(reset.read())
 		return;
+	
+	// Fetch packets
 	for(int x = 0; x < GlobalParams::mesh_dim_x; x++)
-	{
 		for(int y = 0; y < GlobalParams::mesh_dim_y; y++)
-		{
 			localizer_grid[x][y]->gather_packets();
+	
+	// Route packets
+	for(int x = 0; x < GlobalParams::mesh_dim_x; x++)
+		for(int y = 0; y < GlobalParams::mesh_dim_y; y++)
 			localizer_grid[x][y]->transmit_packets();
-		}
-	}
 }
 
 void Localizer::__test_run_localization()

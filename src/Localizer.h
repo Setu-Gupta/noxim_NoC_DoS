@@ -23,6 +23,12 @@ SC_MODULE(Localizer)
 
 	Localizer(sc_module_name _name, NoC * _noc) : sc_module(_name), noc(_noc)
 	{
+			// Return if localization is not enabled
+		if(GlobalParams::weights_file_name == NO_LOCALIZATION)
+			return;
+		if(GlobalParams::accuracy_op_file_name == NO_ACCURACY_OP)
+			return;
+
 		predictor = new Predictor("Predictor", _noc);
 		LOG << "Setting up grid" << endl;
 		setup_grid();
@@ -32,8 +38,8 @@ SC_MODULE(Localizer)
 		sensitive << clock.pos();
 	}
 
-	void setup_grid();
-	void run_localization();
+	void setup_grid();	// Creates grid of LocalizerRouters
+	void run_localization();	// Runs localization
 	void __test_run_localization();	// Depreciated
 
 };

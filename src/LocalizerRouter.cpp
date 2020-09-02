@@ -49,7 +49,7 @@ void LocalizerRouter::__update_timer()
 		timeout--;
 }
 
-void LocalizerRouter::gather_packets()	// Injests at mot one packet
+void LocalizerRouter::gather_packets()	// Injests at most one packet
 {
  	__update_timer();
 	bool prediction = false;
@@ -76,17 +76,13 @@ void LocalizerRouter::gather_packets()	// Injests at mot one packet
 	other_x = x;
 	other_port = ROUTER_DIR_SOUTH;
 	other_id = other_y * GlobalParams::mesh_dim_y + other_x;
-	if(other_y > 0)
+	if(other_y >= 0)
 	{
-		prediction = predictor->predict(other_id, other_port);
-		if(prediction)
+		if(!(localizer_grid[other_x][other_y]->is_empty(other_port)))
 		{
-			if(!(localizer_grid[other_x][other_y]->is_empty(other_port)))
-			{
-				LOG << "Injesting from " << other_id << " from north" << endl;
-				Rx.push_front(localizer_grid[other_x][other_y]->fetch_packet(other_port));
-				return;
-			}
+			LOG << "Injesting from " << other_id << " from north" << endl;
+			Rx.push_front(localizer_grid[other_x][other_y]->fetch_packet(other_port));
+			return;
 		}
 	}
 
@@ -97,15 +93,11 @@ void LocalizerRouter::gather_packets()	// Injests at mot one packet
 	other_id = other_y * GlobalParams::mesh_dim_y + other_x;
 	if(other_y < GlobalParams::mesh_dim_y)
 	{
-		prediction = predictor->predict(other_id, other_port);
-		if(prediction)
+		if(!(localizer_grid[other_x][other_y]->is_empty(other_port)))
 		{
-			if(!(localizer_grid[other_x][other_y]->is_empty(other_port)))
-			{
-				LOG << "Injesting from " << other_id << " from south" << endl;
-				Rx.push_front(localizer_grid[other_x][other_y]->fetch_packet(other_port));
-				return;
-			}
+			LOG << "Injesting from " << other_id << " from south" << endl;
+			Rx.push_front(localizer_grid[other_x][other_y]->fetch_packet(other_port));
+			return;
 		}
 	}
 
@@ -116,15 +108,11 @@ void LocalizerRouter::gather_packets()	// Injests at mot one packet
 	other_id = other_y * GlobalParams::mesh_dim_y + other_x;
 	if(other_x < GlobalParams::mesh_dim_x)
 	{
-		prediction = predictor->predict(other_id, other_port);
-		if(prediction)
+		if(!(localizer_grid[other_x][other_y]->is_empty(other_port)))
 		{
-			if(!(localizer_grid[other_x][other_y]->is_empty(other_port)))
-			{
-				LOG << "Injesting from " << other_id << " from east" << endl;
-				Rx.push_front(localizer_grid[other_x][other_y]->fetch_packet(other_port));
-				return;
-			}
+			LOG << "Injesting from " << other_id << " from east" << endl;
+			Rx.push_front(localizer_grid[other_x][other_y]->fetch_packet(other_port));
+			return;
 		}
 	}
 
@@ -133,17 +121,13 @@ void LocalizerRouter::gather_packets()	// Injests at mot one packet
 	other_x = x - 1;
 	other_port = ROUTER_DIR_EAST;
 	other_id = other_y * GlobalParams::mesh_dim_y + other_x;
-	if(other_x > 0)
+	if(other_x >= 0)
 	{
-		prediction = predictor->predict(other_id, other_port);
-		if(prediction)
+		if(!(localizer_grid[other_x][other_y]->is_empty(other_port)))
 		{
-			if(!(localizer_grid[other_x][other_y]->is_empty(other_port)))
-			{
-				LOG << "Injesting from " << other_id << " from east" << endl;
-				Rx.push_front(localizer_grid[other_x][other_y]->fetch_packet(other_port));
-				return;
-			}
+			LOG << "Injesting from " << other_id << " from east" << endl;
+			Rx.push_front(localizer_grid[other_x][other_y]->fetch_packet(other_port));
+			return;
 		}
 	}
 }
@@ -204,6 +188,12 @@ void LocalizerRouter::__route(TrackerPacket tp)
 
 	if(!routed)
 		LOG << "Digested packet" << endl;
+	
+	if(!routed && timeout == TIMEOUT)	// This means that a packet was generated at current cycle by it wasn't forwarded. Maybe a false +ve. Henece allow generation on next cycle as well.
+	{
+		timeout = 0;
+		LOG << "False trigger" << endl;
+	}
 }
 
 

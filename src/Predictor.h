@@ -36,8 +36,9 @@ public:
 		// __tester();
 	}
 
-	bool predict(int router, int port);
+	bool predict(int router, int port);	// Get prediction. (generates fused prediction)
 	void __tester();	// Prints parsed data to log. Used to test working
+	void __dump_features();	// Prints features of all router and ports
 };
 
 #endif

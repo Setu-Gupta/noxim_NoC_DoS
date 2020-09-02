@@ -11,7 +11,7 @@
 #include <list>
 #include <assert.h>
 
-#define TIMEOUT	5000
+#define TIMEOUT	20
 
 #define ROUTER_DIR_NORTH	0
 #define ROUTER_DIR_EAST		1
@@ -24,7 +24,7 @@ SC_MODULE(LocalizerRouter)
 {
 	list <TrackerPacket> Rx;	// Input packets are put into this buffer
 	list <TrackerPacket> Tx[4];	// Output packets are out into these buffers
-	bool stop = false;
+	bool stop = false;	// If stop == true => Digest all packets.
 	Predictor* predictor;
 	ProcessingElement* pe;	// Used to stop PE
 	NoC* noc;	// Used to get PE

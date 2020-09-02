@@ -60,18 +60,6 @@ void Predictor::setup()
 
 bool Predictor::predict(int router, int port)
 {
-
-	int dbg_cycle = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
-	bool dbg = dbg_cycle == 5020;
-	dbg &= router == 55;
-	dbg &= port == 0;
-	dbg &= false;
-	if(dbg)
-		LOG << "debugging" << endl;
-
-	if(dbg)
-		LOG << "router, port " << router << ", " << port << endl;
-
 	int router_x = router % GlobalParams::mesh_dim_y;
 	int router_y = router / GlobalParams::mesh_dim_y;
 
@@ -83,45 +71,20 @@ bool Predictor::predict(int router, int port)
 	// Fetch features
 	vector <int> port_features = parser->get_features(router, port);
 
-	if(dbg)
-		LOG << "Got features" << endl;
-	if(dbg)
-	{
-		string dbgstr = "";
-		for(int v: port_features)
-			dbgstr += to_string(v) + " ";
-		LOG << "Features are: " << dbgstr << endl;
-	}
-
 	// Get predictions
 	bool input_prediction = perceptron_grid[router_x][router_y].first->get_prediction(port_features);
-	if(dbg)
-		LOG << "Got IP prediction " << input_prediction << endl;
-	// if(dbg)
-		// LOG << "I predict: " << input_prediction << endl;
+	
 	if(router_x == other_x && router_y == other_y)
 		return input_prediction;	// Handle case of loacal PE, local PE's Rx. In both cases, router is same. No need to fuse.		
 
-	if(dbg)
-		LOG << "Other is " << other_x << "," << other_y << endl;
-
-	if(dbg)
-		LOG << "Trying for op prediction" << endl;
 	bool output_prediction = perceptron_grid[other_x][other_y].second->get_prediction(port_features);
-	if(dbg)
-		LOG << "Got op prediction " << output_prediction << endl;
 
-	if(dbg)
-		LOG << "Operation: " << operations[make_pair(router, port)] << endl;
 	// Fuse predictions
 	bool fused_prediction = false;
 	if(operations[make_pair(router, port)])
 		fused_prediction = input_prediction && output_prediction;
 	else
 		fused_prediction = input_prediction || output_prediction;
-
-	if(dbg)
-		LOG << "Returning" << endl;
 
 	return fused_prediction;
 }
@@ -182,4 +145,32 @@ void Predictor::__tester()
 	{
 		LOG << kv.first.first << ", " << kv.first.second << "\t->\t" << kv.second << endl;
 	}
+}
+
+void Predictor::__dump_features()
+{
+	for(int x = 0; x < GlobalParams::mesh_dim_x; x++)
+	{
+		for(int y = 0; y < GlobalParams::mesh_dim_y; y++)
+		{
+			for(int port = 0; port < 6; port++)
+			{
+				if(x == 0 && port == DIRECTION_WEST)
+					continue;
+				if(x == GlobalParams::mesh_dim_x-1 && port == DIRECTION_EAST)
+					continue;
+				if(y == 0 && port == DIRECTION_NORTH)
+					continue;
+				if(y == GlobalParams::mesh_dim_y-1 && port == DIRECTION_SOUTH)
+					continue;
+				int router = y * GlobalParams::mesh_dim_y + x;
+				vector <int> port_features = parser->get_features(router, port);
+				string op = to_string(router) + "_" + to_string(port) + " ";
+				for(int f : port_features)
+					op += to_string(f) + " ";
+				LOG << op << endl;
+			}
+		}
+	}
+
 }
