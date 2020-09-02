@@ -79,6 +79,7 @@ SC_MODULE(ProcessingElement)
     void handleDefault(Flit flit);
     void handleAttack(Flit flit);
     int getNextVC();    // Returns the VC of next flit to transmit
+    void __update_packet_queue();   // Removes packets if diasbled
 
     GlobalTrafficTable *traffic_table;	// Reference to the Global traffic Table
     bool never_transmit;	// true if the PE does not transmit any packet 

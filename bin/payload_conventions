@@ -28,7 +28,12 @@ Descriptions:
 	NOTE: This type cannot be specified in Traffic Table. This will raise an error.
 
 4. Malicious 2 Cycle
-	This packet signifies an ongoint attack between source and destination.
+	This packet signifies an ongoing attack between source and destination.
 	Data field specifies the packet count of current packet. It is initialized to 1.
 	USAGE:	Send one packet from src to dst using Traffic Table.
 		The code will then automatically continue the chain of packets by generating new packets one after another.
+
+5. Malicious simple
+	This packet signifies an ongoing attack between source and destination.
+	Data field specifies the data to be written. (32bit signed int type value).
+	If Data is not specified, it is initialized to -1.

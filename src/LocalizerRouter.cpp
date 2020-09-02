@@ -55,7 +55,24 @@ void LocalizerRouter::gather_packets()	// Injests at most one packet
 	bool prediction = false;
 	assert(predictor != nullptr);
 	prediction = predictor->predict(id, ROUTER_DIR_PE_RX);
-	if(!timeout)
+
+
+	int cur_cycle = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+	bool tester = (cur_cycle >= 5500);
+	tester &= (id == 62);	// Manual triggering
+	// tester &= false;
+	if(cur_cycle > 5500)
+		tester &= prediction;
+	
+	if(tester && !timeout)
+	{
+		timeout = TIMEOUT;	// Reset timer to prevent unneccessary packet generation
+		LOG << "ATTACK SUSPECTED" << endl;
+		Rx.push_front(TrackerPacket());
+		return;
+	}
+
+	if(!timeout && false)
 	{
 		if(prediction)
 		{
@@ -223,6 +240,7 @@ void LocalizerRouter::__stop_cycle(TrackerPacket tp)
 		int other_y = other_id / GlobalParams::mesh_dim_y;
 
 		(noc->t)[other_x][other_y]->pe->disable = true;
+		localizer_grid[other_x][other_y]->stop = true;
 
 		LOG << "Disabled " << other_id << endl;
  	}

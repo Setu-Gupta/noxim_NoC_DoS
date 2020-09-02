@@ -45,7 +45,7 @@ void Stats::receivedFlit(const double arrival_time,
     chist[i].total_received_flits++;
     chist[i].last_received_flit_time = arrival_time - warm_up_time;
     
-    if(flit.payload.type != PAYLOAD_MALICIOUS)
+    if(flit.payload.type != PAYLOAD_MALICIOUS && flit.payload.type != PAYLOAD_SIMPLE_MALICIOUS)
     {
     	if (flit.flit_type == FLIT_TYPE_HEAD)	// Inserted once per packet as FLIT_TYPE_HEAD
 		chist[i].normal_delays.push_back(arrival_time - flit.timestamp);

@@ -87,7 +87,8 @@ void ProcessingElement::txProcess()
 	cumulative_latency.clear();
 	cumulative_latency.resize(GlobalParams::n_virtual_channels, 0);
 
-	int now = sc_time_stamp().to_double() / GlobalParams::clock_period_ps; 
+	int now = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
+	__update_packet_queue();
 	if(!packet_queue.empty() && ack_tx.read() == current_level_tx)
 	{
 		int vc = getNextVC();
@@ -118,6 +119,17 @@ int ProcessingElement::getNextVC()
 {
 	Packet packet = packet_queue.front();
 	return packet.vc_id;
+}
+
+void ProcessingElement::__update_packet_queue()
+{
+	if(packet_queue.empty())
+		return;
+	Packet packet = packet_queue.front();
+	if(packet.size == packet.flit_left)	// New packet
+		if(disable)	// Clear packet queue
+    		while(!packet_queue.empty())
+    			packet_queue.pop();
 }
 
 Flit ProcessingElement::nextFlit()

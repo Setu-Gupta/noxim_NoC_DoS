@@ -50,6 +50,10 @@ void Localizer::run_localization()
 	for(int x = 0; x < GlobalParams::mesh_dim_x; x++)
 		for(int y = 0; y < GlobalParams::mesh_dim_y; y++)
 			localizer_grid[x][y]->transmit_packets();
+
+	int cur_cycle = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;	// For debugging
+	if(cur_cycle == 6009 && false)
+		predictor->__dump_features();
 }
 
 void Localizer::__test_run_localization()

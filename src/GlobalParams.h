@@ -91,11 +91,12 @@ using namespace std;
 #define TOKEN_PACKET           "TOKEN_PACKET"
 
 // Payloads
-#define PAYLOAD_DEFAULT		0
-#define PAYLOAD_WRITE_DATA	1
-#define PAYLOAD_READ_REQ	2
-#define PAYLOAD_READ_ANS	3
-#define PAYLOAD_MALICIOUS	4
+#define PAYLOAD_DEFAULT				0
+#define PAYLOAD_WRITE_DATA			1
+#define PAYLOAD_READ_REQ			2
+#define PAYLOAD_READ_ANS			3
+#define PAYLOAD_MALICIOUS			4
+#define PAYLOAD_SIMPLE_MALICIOUS	5
 
 // Deafult values for feature and weight file
 #define NO_FEATURES         "NO_FEATURES_EXTRACTION"
@@ -103,103 +104,103 @@ using namespace std;
 #define NO_ACCURACY_OP      "NO_ACCURACY_OP"
 
 typedef struct {
-    pair<double, double> ber;
-    int dataRate;
-    vector<string> macPolicy;
+	pair<double, double> ber;
+	int dataRate;
+	vector<string> macPolicy;
 } ChannelConfig;
 
 typedef struct {
-    vector<int> attachedNodes;
-    vector<int> rxChannels;
-    vector<int> txChannels;
-    int toTileBufferSize;
-    int fromTileBufferSize;
-    int txBufferSize;
-    int rxBufferSize;
+	vector<int> attachedNodes;
+	vector<int> rxChannels;
+	vector<int> txChannels;
+	int toTileBufferSize;
+	int fromTileBufferSize;
+	int txBufferSize;
+	int rxBufferSize;
 } HubConfig;
 
 typedef struct {
-    map<pair <int, int>, double> front;
-    map<pair <int, int>, double> pop;
-    map<pair <int, int>, double> push;
-    map<pair <int, int>, double> leakage;
+	map<pair <int, int>, double> front;
+	map<pair <int, int>, double> pop;
+	map<pair <int, int>, double> push;
+	map<pair <int, int>, double> leakage;
 } BufferPowerConfig;
 
 typedef map<double, pair <double, double> > LinkBitLinePowerConfig;
 
 typedef struct {
-    map<pair<double, double>, pair<double, double> > crossbar_pm;
-    map<int, pair<double, double> > network_interface;
-    map<string, pair<double, double> > routing_algorithm_pm;
-    map<string, pair<double, double> > selection_strategy_pm;
+	map<pair<double, double>, pair<double, double> > crossbar_pm;
+	map<int, pair<double, double> > network_interface;
+	map<string, pair<double, double> > routing_algorithm_pm;
+	map<string, pair<double, double> > selection_strategy_pm;
 } RouterPowerConfig;
 
 typedef struct {
-    pair<double, double> transceiver_leakage;
-    pair<double, double> transceiver_biasing;
-    double rx_dynamic;
-    double rx_snooping;
-    double default_tx_energy;
-    map<pair <int, int>, double> transmitter_attenuation_map;
+	pair<double, double> transceiver_leakage;
+	pair<double, double> transceiver_biasing;
+	double rx_dynamic;
+	double rx_snooping;
+	double default_tx_energy;
+	map<pair <int, int>, double> transmitter_attenuation_map;
 } HubPowerConfig;
 
 typedef struct {
-    BufferPowerConfig bufferPowerConfig;
-    LinkBitLinePowerConfig linkBitLinePowerConfig;
-    RouterPowerConfig routerPowerConfig;
-    HubPowerConfig hubPowerConfig;
+	BufferPowerConfig bufferPowerConfig;
+	LinkBitLinePowerConfig linkBitLinePowerConfig;
+	RouterPowerConfig routerPowerConfig;
+	HubPowerConfig hubPowerConfig;
 } PowerConfig;
 
 struct GlobalParams {
-    static string verbose_mode;
-    static int trace_mode;
-    static string trace_filename;
-    static string topology;
-    static int mesh_dim_x;
-    static int mesh_dim_y;
-    static int n_delta_tiles;
-    static double r2r_link_length;
-    static double r2h_link_length;
-    static int buffer_depth;
-    static int flit_size;
-    static int min_packet_size;
-    static int max_packet_size;
-    static string routing_algorithm;
-    static string routing_table_filename;
-    static string selection_strategy;
-    static double packet_injection_rate;
-    static double probability_of_retransmission;
-    static double locality;
-    static string traffic_distribution;
-    static string traffic_table_filename;
-    static string config_filename;
-    static string power_config_filename;
-    static int clock_period_ps;
-    static int simulation_time;
-    static int n_virtual_channels;
-    static int reset_time;
-    static int stats_warm_up_time;
-    static int rnd_generator_seed;
-    static bool detailed;
-    static vector <pair <int, double> > hotspots;
-    static double dyad_threshold;
-    static unsigned int max_volume_to_be_drained;
-    static bool show_buffer_stats;
-    static bool use_winoc;
-    static int winoc_dst_hops;
-    static bool use_powermanager;
-    static ChannelConfig default_channel_configuration;
-    static map<int, ChannelConfig> channel_configuration;
-    static HubConfig default_hub_configuration;
-    static map<int, HubConfig> hub_configuration;
-    static map<int, int> hub_for_tile;
-    static PowerConfig power_configuration;
-    // out of yaml configuration
-    static bool ascii_monitor;
-    static int channel_selection;
-    static string weights_file_name;
-    static string feature_file_name;
-    static string accuracy_op_file_name;
+	static string verbose_mode;
+	static int trace_mode;
+	static string trace_filename;
+	static string topology;
+	static int mesh_dim_x;
+	static int mesh_dim_y;
+	static int n_delta_tiles;
+	static double r2r_link_length;
+	static double r2h_link_length;
+	static int buffer_depth;
+	static int flit_size;
+	static int min_packet_size;
+	static int max_packet_size;
+	static string routing_algorithm;
+	static string routing_table_filename;
+	static string selection_strategy;
+	static double packet_injection_rate;
+	static double probability_of_retransmission;
+	static double locality;
+	static string traffic_distribution;
+	static string traffic_table_filename;
+	static string config_filename;
+	static string power_config_filename;
+	static int clock_period_ps;
+	static int simulation_time;
+	static int n_virtual_channels;
+	static int reset_time;
+	static int stats_warm_up_time;
+	static int rnd_generator_seed;
+	static bool detailed;
+	static vector <pair <int, double> > hotspots;
+	static double dyad_threshold;
+	static unsigned int max_volume_to_be_drained;
+	static bool show_buffer_stats;
+	static bool use_winoc;
+	static int winoc_dst_hops;
+	static bool use_powermanager;
+	static ChannelConfig default_channel_configuration;
+	static map<int, ChannelConfig> channel_configuration;
+	static HubConfig default_hub_configuration;
+	static map<int, HubConfig> hub_configuration;
+	static map<int, int> hub_for_tile;
+	static PowerConfig power_configuration;
+	// out of yaml configuration
+	static bool ascii_monitor;
+	static int channel_selection;
+	static string weights_file_name;
+	static string feature_file_name;
+	static string accuracy_op_file_name;
 };
 
 #endif
