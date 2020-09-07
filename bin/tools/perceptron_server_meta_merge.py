@@ -538,7 +538,8 @@ Args:
 	vector	: Input to percepton
 """
 def predict(bias, weights, vector):
-	used_idx = [0,1,4] # Use only buffer status, cycles since last flit and buffer waiting time
+	# used_idx = [0,1,4] # Use only buffer status, cycles since last flit and buffer waiting time
+	use_idx = [0]	# Used only buffer status
 
 	activation = bias
 
@@ -552,7 +553,7 @@ def predict(bias, weights, vector):
 
 
 # Learning parameters
-EPOCHS = 100
+EPOCHS = 10
 LEARNING_RATE = 0.00001
 """
 Learns the weights for percepton
@@ -565,7 +566,8 @@ Rets:
 	weights	: Learnt weights
 """
 def train_weights(train, log, ID):
-	used_idx = [0,1,4] # Use only buffer status, cycles since last flit and buffer waiting time
+	# used_idx = [0,1,4] # Use only buffer status, cycles since last flit and buffer waiting time
+	use_idx = [0]	# Used only buffer status
 	bias = 0.0
 	weights = [0] * PARSED_FEATURE_COUNT
 	for epoch in range(EPOCHS):	# Iterate over all epochs
