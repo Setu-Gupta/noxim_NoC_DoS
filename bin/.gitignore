@@ -5,3 +5,4 @@ features
 per_log
 test_vectors/*
 executer.sh
+perceptron_data*
