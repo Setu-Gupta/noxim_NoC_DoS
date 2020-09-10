@@ -3,6 +3,6 @@ tmp_logs
 build/*
 features
 per_log
-test_vectors/*
-executer.sh
+# test_vectors/*
+# executer.sh
 perceptron_data*
