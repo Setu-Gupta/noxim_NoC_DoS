@@ -5,3 +5,4 @@ benchmarks
 test*
 feature_tester
 temp*
+*.zip
