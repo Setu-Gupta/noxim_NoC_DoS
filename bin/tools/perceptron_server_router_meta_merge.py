@@ -209,7 +209,7 @@ def parse_features(feature_file, router_and_ports, log, ID):
 
 # Length of moving average window
 AVG_CYCLES = 5
-ENABLE_AVG_WINDOW = False
+ENABLE_AVG_WINDOW = True
 """
 Modifies the data in router info.
 Currently configured to take a moving window average on various parameters. The size of window is AVG_CYCLES
@@ -717,8 +717,8 @@ Args:
 	vector	: Input to percepton
 """
 def predict(bias, weights, vector):
-	# used_idx = [0,1,4] # Use only buffer status, cycles since last flit and buffer waiting time
-	used_idx = [0,4]	# Used only buffer status
+	used_idx = [0,1,3,4] # Use only buffer status, cycles since last flit, transmitted flits and buffer waiting time
+	# used_idx = [0,4]	# Used only buffer status
 	activation = bias
 
 	assert(len(vector) == len(weights))
@@ -744,8 +744,8 @@ Rets:
 	weights	: Learnt weights
 """
 def train_weights(train, log, ID):
-	# used_idx = [0,1,4] # Use only buffer status, cycles since last flit and buffer waiting time
-	used_idx = [0,4]	# Used only buffer status
+	used_idx = [0,1,3,4] # Use only buffer status, cycles since last flit, transmitted flits and buffer waiting time
+	# used_idx = [0,4]	# Used only buffer status
 	bias = 0.0
 	weights = [0] * PARSED_FEATURE_COUNT
 	for epoch in range(EPOCHS):	# Iterate over all epochs
