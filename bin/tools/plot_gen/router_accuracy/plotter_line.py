@@ -48,7 +48,7 @@ min_height = np.min(y)
 rgba = [cmap((k-min_height)/(max_height-min_height)) for k in y]
 
 # plt.bar(x, y, color=rgba)		# <----------- Uncomment this for bar graph
-plt.plot(x,y,'r')		# <----------- Uncomment this for line graph
+plt.plot(x,y,'r', marker='o', markerfacecolor='b', markeredgecolor='b')		# <----------- Uncomment this for line graph
 plt.title(label="Accuracy for different routers", fontsize=18)
 plt.xlabel("Router ID", fontsize=16)
 plt.xticks(list(range(2, 65, 2)))
