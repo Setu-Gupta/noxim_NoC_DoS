@@ -1175,10 +1175,12 @@ def main():
 
 		print("Compressing logs")
 		log_dir = dir_name + "/logs"
-		compress_cmd = "tar -cf - " + log_dir + " | pv | pigz -9 -41  > " + dir_name + "/logs.tar.gz"
+		compress_cmd = "tar -cf - " + log_dir + " | pv | pigz -9 -p 41  > " + dir_name + "/logs.tar.gz"
 		remove_cmd = "rm -rf " + log_dir
+		print(compress_cmd)
 		os.system(compress_cmd)
 		print("Removing uncompressed data")
+		print(remove_cmd)
 		os.system(remove_cmd)
 		print("Done")
 
