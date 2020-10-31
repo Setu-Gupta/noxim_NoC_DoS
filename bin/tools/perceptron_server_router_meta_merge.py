@@ -1173,6 +1173,15 @@ def main():
 		processes.clear()
 		print("Done!")
 
+		print("Compressing logs")
+		log_dir = dir_name + "/logs"
+		compress_cmd = "tar -cf - " + log_dir + " | pv | pigz -9 -41  > " + dir_name + "/logs.tar.gz"
+		remove_cmd = "rm -rf " + log_dir
+		os.system(compress_cmd)
+		print("Removing uncompressed data")
+		os.system(remove_cmd)
+		print("Done")
+
 	# Meta merge per port features
 	print("Meta merging features...")
 
