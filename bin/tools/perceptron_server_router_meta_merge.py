@@ -717,7 +717,7 @@ Args:
 	vector	: Input to percepton
 """
 def predict(bias, weights, vector):
-	used_idx = [0,1,3,4] # Use only buffer status, cycles since last flit, transmitted flits and buffer waiting time
+	used_idx = [0,1,4] # Use only buffer status, cycles since last flit, transmitted flits and buffer waiting time
 	# used_idx = [0,4]	# Used only buffer status
 	activation = bias
 
@@ -744,7 +744,7 @@ Rets:
 	weights	: Learnt weights
 """
 def train_weights(train, log, ID):
-	used_idx = [0,1,3,4] # Use only buffer status, cycles since last flit, transmitted flits and buffer waiting time
+	used_idx = [0,1,4] # Use only buffer status, cycles since last flit, transmitted flits and buffer waiting time
 	# used_idx = [0,4]	# Used only buffer status
 	bias = 0.0
 	weights = [0] * PARSED_FEATURE_COUNT
