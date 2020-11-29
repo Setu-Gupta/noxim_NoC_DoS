@@ -59,7 +59,7 @@ void LocalizerRouter::gather_packets()	// Injests at most one packet
 
 	int cur_cycle = sc_time_stamp().to_double() / GlobalParams::clock_period_ps;
 	bool tester = (cur_cycle >= 1000);
-	tester &= (id == 7) || (id == 56);	// Manual triggering
+	tester &= (id == 7);	// Manual triggering
 	// tester &= false;
 	if(cur_cycle > 1000)
 		tester &= prediction;

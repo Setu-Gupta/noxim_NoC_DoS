@@ -5,11 +5,12 @@ Date	: 24th Aug 2020
 
 This tool is used generate a CSV file from accuracy_report.
 The tool can be used via the following command
-	python3 path/to/this/accuracy_report
+	python3 path/to/this/file path/to/the/accuracy_report
+Note: accuracy_report is in DoS_noxim_router_meta_merge_xxx
 """
 
 """
-NOTE: accuracvy_setup format
+NOTE: accuracy_setup format
 router_id, port (refer DIRECTIONS below), operation (1 if AND and 0 if OR)
 """
 
