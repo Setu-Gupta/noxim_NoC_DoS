@@ -213,14 +213,16 @@ def get_max_improvement(parsed_data, trip):
 
 			(ip, op, prob) = localization_prob(parsed_data, src, dst)
 			raw = (ip, op, prob)
-			rel_prob = max(ip,op)
+			rel_prob = ip
 			rel = (ip/rel_prob, op/rel_prob, prob/rel_prob)
 
 			res.append((src, dst, raw, rel))
 
 	res.sort(key = lambda x:x[3][-1], reverse = True)
 
-	return res[:20]
+	if(trip == -1):
+		return res
+	return res[:trip]
 
 def main():
 	accuracy_report_path = sys.argv[1]

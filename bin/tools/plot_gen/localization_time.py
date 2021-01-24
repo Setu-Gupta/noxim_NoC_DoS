@@ -4,16 +4,16 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as colors
 
-MULTIPLIER = 5
+MULTIPLIER = 10
 def f():
 	x = []
 	y = []
 	z = []
-	for x_val in range(1,65, 2):	# <------ change to 2 for a denser graph
-		for y_val in range(1,65, 2):	# <------ change to 2 for a denser graph
+	for x_val in range(0, 64, 4):	# <------ change to 2 for a denser graph
+		for y_val in range(0, 64, 4):	# <------ change to 2 for a denser graph
 
 			# Get coordinates of first router
-			x1 = x_val % 82
+			x1 = x_val % 8
 			y1 = x_val // 8
 
 			# Get coordinates of first router
@@ -21,7 +21,7 @@ def f():
 			y2 = y_val // 8
 
 			dist = abs(y2-y1) + abs(x2-x1)
-			val = dist - 2
+			val = dist
 			val *= MULTIPLIER
 
 			val = max(val, 0)
@@ -36,13 +36,13 @@ ax1 = fig.add_subplot(111, projection='3d')
 
 x3, y3, dz = f()
 # dx = np.ones(64*64)
-dx = np.ones(32*32)# <------ change to 32*32 for a denser graph
+dx = np.ones(16*16)# <------ change to 32*32 for a denser graph
 # dx *= 0.5
 # dy = np.ones(64*64)
-dy = np.ones(32*32)# <------ change to 32*32 for a denser graph
-# dx *= 0.5
+dy = np.ones(16*16)# <------ change to 32*32 for a denser graph
+# dy *= 0.5
 # z3 = np.zeros(64*64)
-z3 = np.zeros(32*32)# <------ change to 32*32 for a denser graph
+z3 = np.zeros(16*16)# <------ change to 32*32 for a denser graph
 
 
 # cmap = cm.get_cmap('coolwarm') # Get desired colormap - you can change this!

@@ -1,8 +1,8 @@
 ##### LIBRARIES CONFIGURATION #####
 
 # SYSTEMC := /usr/local/systemc-2.3.1
-SYSTEMC := /home/iiitd/DoS_NoC/systemC/2.3.1/systemc-2.3.1a
-YAML    := /home/iiitd/DoS_NoC/yaml/yaml-cpp
+SYSTEMC := /home/anonymous/noxim/systemC/2.3.1-debug/systemc-2.3.1a
+YAML    := /home/anonymous/noxim/yaml/yaml-cpp
 
 
 ##### DIRECTORIES #####
@@ -35,7 +35,7 @@ CXXFLAGS := $(OPT) $(OTHER) $(DEBUG)
 INCDIR := -I$(SRCDIR) -isystem $(SYSTEMC)/include -I$(YAML)/include
 LIBDIR := -L$(SRCDIR) -L$(SYSTEMC_LIBS) -L$(YAML)/lib
 
-LIBS := -lsystemc -lm -lyaml-cpp -ldl 
+LIBS := -lsystemc -lm -lyaml-cpp 
 
 SPACE := $(subst ,, )
 VPATH := $(SRCDIR):$(subst $(SPACE),:,$(SUBDIRS))
