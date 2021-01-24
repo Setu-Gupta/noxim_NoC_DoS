@@ -75,6 +75,7 @@ void ProcessingElement::txProcess()
 
 	if (canShot(packet) && !disable) {
 	    packet_queue.push(packet);
+	    LOG << "SENDING PACKET! Src:" << packet.src_id << " Dst:" << packet.dst_id << " at Cycle:" << sc_time_stamp().to_double() / GlobalParams::clock_period_ps << endl;
 	    transmittedAtPreviousCycle = true;
 	} else
 	    transmittedAtPreviousCycle = false;

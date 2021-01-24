@@ -185,6 +185,7 @@ ProcessingElement.cpp
 	Added definition for getNextVC() which returns the VC for the next flit to transmit.
 	Added definitions for methods to fetch features.
 	Modified rxprocess() and txprocess() to support feature collection.
+	Added log statement whenever a packet is inserted in packet queue
 
 Stats.h
 	Modified struct CommHistory to include normal fields i.e. field exclusively for non malicious packets.
@@ -351,4 +352,9 @@ More details about benchmarks can be found in benchmark_info file.
 
 Compatibility issues:
 Currently accuracy op gen is only for per router basis.
-Currently localization isonly for per router basis.
+Currently localization is only for per router basis.
+
+-----------------------------------------------------------------------------------------------------
+
+How to know when a packet was generated:
+./noxim -topology MESH -dimx 2 -dimy 2 -config ../personal_configs/my_config.yaml -traffic transpose2 | grep "SENDING PACKET" > tlog

@@ -1,5 +1,5 @@
-./noxim -topology MESH -dimx 8 -dimy 8 -traffic table test_vectors/FFT_baseline -config ../personal_configs/my_config.yaml > logs/FFT_baseline
-./noxim -topology MESH -dimx 8 -dimy 8 -traffic table test_vectors/FFT_attack -config ../personal_configs/my_config.yaml > logs/FFT_attack
+./noxim -topology MESH -dimx 8 -dimy 8 -traffic table test_vectors/FFT_baseline -config ../personal_configs/my_config.yaml > logs/FFT_baseline &
+./noxim -topology MESH -dimx 8 -dimy 8 -traffic table test_vectors/FFT_attack -config ../personal_configs/my_config.yaml > logs/FFT_attack &
 ./noxim -topology MESH -dimx 8 -dimy 8 -traffic table test_vectors/FFT_attack -config ../personal_configs/my_config.yaml -accuracy test_vectors/accuracy_setup -weights test_vectors/weights > logs/FFT_loc
 
 # ./noxim -topology MESH -dimx 8 -dimy 8 -traffic table test_vectors/Barnes_0.00001 -config ../personal_configs/my_config.yaml > logs/Barnes_baseline &
