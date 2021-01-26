@@ -201,7 +201,7 @@ def main():
 
 		router_feature_file_path = benchmark_path + "/per_router_features"
 		print(router_feature_file_path)
-		for file in weights_dict:
+		for file in weights_dict.keys():
 			jobs.put(file)
 
 		# Create processes and get accuracy
@@ -225,7 +225,7 @@ def main():
 		accuracy_net = 0
 		false_positives_net = 0
 		false_negatives_net = 0
-		for job in benchmark_accuracy:
+		for job in benchmark_accuracy.keys():
 			total_jobs += 1
 			accuracy_net += benchmark_accuracy[job][0]
 			false_positives_net += benchmark_accuracy[job][1]
