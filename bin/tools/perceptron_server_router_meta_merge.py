@@ -1,6 +1,7 @@
 """
 Author	: Setu Gupta
-Email	: setu18190@iiitd.ac.in
+Email	: setu1
+190@iiitd.ac.in
 Date	: 1st Aug 2020
 
 This tool is use to train and test perceptrons on server to detect congestion in ports.
@@ -473,8 +474,8 @@ def worker_gen(ID, jobs, benchmark_name, working_directory):
 				log_file_path_baseline = working_directory + "/logs/" + get_router_name(src) + "_to_" + get_router_name(dst) + "_baseline"
 				log_file_path_attack = working_directory + "/logs/" + get_router_name(src) + "_to_" + get_router_name(dst) + "_attack"
 				
-				cmd_baseline = "./../noxim -topology MESH -dimx 8 -dimy 8 -traffic table " + baseline_file_path + "  -config ./../../personal_configs/my_config.yaml -power ./../power.yaml -features " + feature_file_path_baseline + " > " + log_file_path_baseline
-				cmd_attack = "./../noxim -topology MESH -dimx 8 -dimy 8 -traffic table " + attack_file_path + "  -config ./../../personal_configs/my_config.yaml -power ./../power.yaml -features " + feature_file_path_attack + " > " + log_file_path_attack
+				cmd_baseline = "./../noxim -topology MESH -dimx " + str(DIM_X) + " -dimy " + str(DIM_Y) + " -traffic table " + baseline_file_path + "  -config ./../../personal_configs/my_config.yaml -power ./../power.yaml -features " + feature_file_path_baseline + " > " + log_file_path_baseline
+				cmd_attack = "./../noxim -topology MESH -dimx " + str(DIM_X) + " -dimy " + str(DIM_Y) + " -traffic table " + attack_file_path + "  -config ./../../personal_configs/my_config.yaml -power ./../power.yaml -features " + feature_file_path_attack + " > " + log_file_path_attack
 
 				os.system(cmd_baseline)
 				os.system(cmd_attack)
