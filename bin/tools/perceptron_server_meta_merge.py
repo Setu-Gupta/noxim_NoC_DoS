@@ -1061,7 +1061,7 @@ def main():
 	total_jobs = 0
 	total_accuracy = 0
 	accuracy_net = 0
-	for job in accuracy:
+	for job in accuracy.keys():
 		total_jobs += 1
 		total_accuracy += accuracy[job]
 	if(total_jobs != 0):
