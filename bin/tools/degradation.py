@@ -50,7 +50,7 @@ def worker_gen(ID, jobs, root_directory):
 				baseline_file_path = working_directory + "/traffic_tables/" + str(pir) + "_baseline"
 				attack_file_path = working_directory + "/traffic_tables/" + str(pir) + "_attack"
 				
-				attack_string = str(SRC) + "\t" + str(DST) + "\t" + str(pir) + "\t" + str(pir) + "\t1\t1000000\n"
+				attack_string = str(SRC) + "\t" + str(DST) + "\t" + str(pir) + "\t" + str(pir) + "\t1\t1000000\t1000001\t5\n"
 
 				with open(source_file_path, "r") as source:
 					lines = source.readlines()
@@ -66,7 +66,7 @@ def worker_gen(ID, jobs, root_directory):
 				print("Process #" + str(ID) + "\tCalling noxim")
 
 				log_file_path_baseline = working_directory + "/logs/" + str(pir) + "_baseline"
-				log_file_path_attack = working_directory + "/logs" + str(pir) + "_attack"
+				log_file_path_attack = working_directory + "/logs/" + str(pir) + "_attack"
 				
 				cmd_baseline = "./../noxim -topology MESH -dimx " + str(DIM_X) + " -dimy " + str(DIM_Y) + " -traffic table " + baseline_file_path + "  -config ./../../personal_configs/my_config.yaml -power ./../power.yaml > " + log_file_path_baseline
 				cmd_attack = "./../noxim -topology MESH -dimx " + str(DIM_X) + " -dimy " + str(DIM_Y) + " -traffic table " + attack_file_path + "  -config ./../../personal_configs/my_config.yaml -power ./../power.yaml > " + log_file_path_attack
