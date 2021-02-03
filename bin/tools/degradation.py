@@ -71,8 +71,8 @@ def worker_gen(ID, jobs, root_directory):
 				cmd_baseline = "./../noxim -topology MESH -dimx " + str(DIM_X) + " -dimy " + str(DIM_Y) + " -traffic table " + baseline_file_path + "  -config ./../../personal_configs/my_config.yaml -power ./../power.yaml > " + log_file_path_baseline
 				cmd_attack = "./../noxim -topology MESH -dimx " + str(DIM_X) + " -dimy " + str(DIM_Y) + " -traffic table " + attack_file_path + "  -config ./../../personal_configs/my_config.yaml -power ./../power.yaml > " + log_file_path_attack
 
-				print(cmd_baseline)
-				print(cmd_attack)
+				os.system(cmd_baseline)
+				os.system(cmd_attack)
 				#--------------------------------------------------------------------------------------------------------------------------
 
 				# Log completing the job
